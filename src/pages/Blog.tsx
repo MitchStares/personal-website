@@ -3,6 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { fetchBlogs, createBlog, deleteBlog } from '../services/blogService';
 import { auth } from '../firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
+import BlogPreview from '../components/BlogPreview';
+import MarkdownEditor from '../components/MarkdownEditor';
+import './Blog.css'; // Add a CSS file for styling
 
 interface Blog {
   id: string;
@@ -54,34 +57,33 @@ const Blog: React.FC = () => {
   };
 
   return (
-    <div>
+    <div className="blog-container">
       <h1>Blog</h1>
       {user && (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="blog-form">
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Title"
             required
+            className="blog-title-input"
           />
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Content"
-            required
-          />
-          <button type="submit">Submit</button>
+          <MarkdownEditor value={content} onChange={setContent} />
+          <button type="submit" className="blog-submit-button">Submit</button>
         </form>
       )}
-      <div>
+      <div className="blog-previews">
         {blogs.map((blog) => (
-          <div key={blog.id}>
-            <h2>{blog.title}</h2>
-            <p>{blog.content}</p>
-            <p>{new Date(blog.date).toLocaleDateString()}</p>
-            {user && <button onClick={() => handleDelete(blog.id)}>Delete</button>}
-          </div>
+          <BlogPreview
+            key={blog.id}
+            id={blog.id}
+            title={blog.title}
+            summary={blog.content.substring(0, 100)} // Assuming the first 100 characters as summary
+            date={blog.date}
+            user={user}
+            onDelete={handleDelete}
+          />
         ))}
       </div>
     </div>

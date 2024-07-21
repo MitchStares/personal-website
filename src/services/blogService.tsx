@@ -1,5 +1,5 @@
 // src/services/blogService.ts
-import { collection, getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, deleteDoc, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
 interface Blog {
@@ -21,11 +21,26 @@ export const fetchBlogs = async (): Promise<Blog[]> => {
   }));
 };
 
+export const fetchBlogById = async (id: string): Promise<Blog | null> => {
+  const blogDoc = doc(db, 'blogs', id);
+  const docSnap = await getDoc(blogDoc);
+  if (docSnap.exists()) {
+    return {
+      id: docSnap.id,
+      title: docSnap.data().title,
+      content: docSnap.data().content,
+      date: docSnap.data().date.toDate()
+    };
+  } else {
+    return null;
+  }
+};
+
 export const createBlog = async (blog: { title: string; content: string; date: Date }) => {
   return await addDoc(blogCollectionRef, blog);
 };
 
 export const deleteBlog = async (id: string) => {
-    const blogDoc = doc(db, 'blogs', id);
-    return await deleteDoc(blogDoc);
+  const blogDoc = doc(db, 'blogs', id);
+  return await deleteDoc(blogDoc);
 };
