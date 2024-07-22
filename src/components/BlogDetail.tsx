@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { fetchBlogById } from '../services/blogService';
+import ReactMarkdown from 'react-markdown';
 
 const BlogDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -26,7 +27,7 @@ const BlogDetail: React.FC = () => {
     <div className="blog-detail">
       <h1>{blog.title}</h1>
       <p>{new Date(blog.date).toLocaleDateString()}</p>
-      <div>{blog.content}</div>
+      <ReactMarkdown>{blog.content}</ReactMarkdown>
     </div>
   );
 };

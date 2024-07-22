@@ -1,47 +1,52 @@
 /* src/pages/Blog.css */
 .blog-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-  }
-  
-  .blog-form {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    margin-bottom: 40px;
-  }
-  
-  .blog-title-input {
-    font-size: 1.5em;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-  }
-  
-  .markdown-editor {
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 10px;
-  }
-  
-  .blog-submit-button {
-    padding: 10px 20px;
-    font-size: 1em;
-    color: #fff;
-    background-color: #007bff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  
-  .blog-submit-button:hover {
-    background-color: #0056b3;
-  }
-  
-  .blog-previews {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-  
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.blog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.blog-title-input {
+  font-size: 1.5em;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.markdown-editor {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+}
+
+.blog-submit-button {
+  padding: 10px 20px;
+  font-size: 1em;
+  color: #fff;
+  background-color: #007bff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.blog-submit-button:hover {
+  background-color: #0056b3;
+}
+
+.blog-previews {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.blog-preview-image {
+  width: 100%;
+  height: auto;
+  border-radius: 5px;
+}
