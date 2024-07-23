@@ -42,7 +42,7 @@ const BlogDetail: React.FC = () => {
   }
 
   return (
-    <div className="blog-detail">
+    <div className="max-w-4xl mx-auto p-4">
       {isEditing ? (
         <div>
           <input
@@ -51,20 +51,22 @@ const BlogDetail: React.FC = () => {
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Title"
             required
-            className="blog-title-input"
+            className="p-2 border rounded-lg w-full mb-4"
           />
           <MarkdownEditor value={content} onChange={setContent} />
           <ImageUpload onUpload={setImageUrl} />
-          <button onClick={handleSave}>Save</button>
-          <button onClick={() => setIsEditing(false)}>Cancel</button>
+          <div className="flex gap-4 mt-4">
+            <button onClick={handleSave} className="p-2 bg-blue-500 text-white rounded-lg">Save</button>
+            <button onClick={() => setIsEditing(false)} className="p-2 bg-gray-500 text-white rounded-lg">Cancel</button>
+          </div>
         </div>
       ) : (
         <div>
-          {blog.imageUrl && <img src={blog.imageUrl} alt={blog.title} className="blog-detail-image" />}
-          <h1>{blog.title}</h1>
-          <p>{new Date(blog.date).toLocaleDateString()}</p>
-          <ReactMarkdown>{blog.content}</ReactMarkdown>
-          <button onClick={() => setIsEditing(true)}>Edit</button>
+          {blog.imageUrl && <img src={blog.imageUrl} alt={blog.title} className="w-full h-auto rounded-lg mb-4" />}
+          <h1 className="text-3xl font-bold mb-2">{blog.title}</h1>
+          <p className="text-gray-500 mb-4">{new Date(blog.date).toLocaleDateString()}</p>
+          <ReactMarkdown className="prose">{blog.content}</ReactMarkdown>
+          <button onClick={() => setIsEditing(true)} className="mt-4 p-2 bg-blue-500 text-white rounded-lg">Edit</button>
         </div>
       )}
     </div>

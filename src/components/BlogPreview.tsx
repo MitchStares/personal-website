@@ -14,12 +14,14 @@ interface BlogPreviewProps {
 
 const BlogPreview: React.FC<BlogPreviewProps> = ({ id, title, summary, date, imageUrl, user, onDelete }) => {
   return (
-    <div className="blog-preview">
-      {imageUrl && <img src={imageUrl} alt={title} className="blog-preview-image" />}
-      <h2><Link to={`/blog/${id}`}>{title}</Link></h2>
-      <p>{summary}</p>
-      <p>{new Date(date).toLocaleDateString()}</p>
-      {user && <button onClick={() => onDelete(id)}>Delete</button>}
+    <div className="flex items-center gap-4 p-4 border rounded-lg">
+      {imageUrl && <img src={imageUrl} alt={title} className="w-24 h-24 object-cover rounded-lg" />}
+      <div className="flex-1">
+        <h2 className="text-xl font-bold"><Link to={`/blog/${id}`}>{title}</Link></h2>
+        <p className="text-gray-600">{summary}</p>
+        <p className="text-gray-400">{new Date(date).toLocaleDateString()}</p>
+        {user && <button onClick={() => onDelete(id)} className="mt-2 text-red-500">Delete</button>}
+      </div>
     </div>
   );
 };

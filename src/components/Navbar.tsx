@@ -1,31 +1,17 @@
 // src/components/Navbar.tsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import styled from 'styled-components';
-
-const Nav = styled.nav`
-  display: flex;
-  justify-content: space-around;
-  background: #333;
-  padding: 1rem;
-`;
-
-const NavLink = styled(Link)`
-  color: white;
-  text-decoration: none;
-  &:hover {
-    text-decoration: underline;
-  }
-`;
 
 const Navbar: React.FC = () => {
   return (
-    <Nav>
-      <NavLink to="/">Home</NavLink>
-      <NavLink to="/blog">Blog</NavLink>
-      <NavLink to="/budget-tracker">Budget Tracker</NavLink>
-      <NavLink to="/auth">Signin</NavLink>
-    </Nav>
+    <nav className="bg-gray-800 p-4">
+      <div className="container mx-auto flex justify-around">
+        <Link to="/" className="text-white hover:underline">Home</Link>
+        <Link to="/blog" className="text-white hover:underline">Blog</Link>
+        <Link to="/budget-tracker" className="text-white hover:underline">Budget Tracker</Link>
+        <Link to="/auth" className="text-white hover:underline">Signin</Link>
+      </div>
+    </nav>
   );
 };
 

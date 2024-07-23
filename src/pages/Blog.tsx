@@ -6,7 +6,6 @@ import { onAuthStateChanged } from 'firebase/auth';
 import BlogPreview from '../components/BlogPreview';
 import MarkdownEditor from '../components/MarkdownEditor';
 import ImageUpload from '../components/ImageUpload';
-import './Blog.css';
 
 interface Blog {
   id: string;
@@ -61,24 +60,24 @@ const Blog: React.FC = () => {
   };
 
   return (
-    <div className="blog-container">
-      <h1>Blog</h1>
+    <div className="max-w-4xl mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-4">Blog</h1>
       {user && (
-        <form onSubmit={handleSubmit} className="blog-form">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 mb-8">
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Title"
             required
-            className="blog-title-input"
+            className="p-2 border rounded-lg"
           />
           <MarkdownEditor value={content} onChange={setContent} />
           <ImageUpload onUpload={setImageUrl} />
-          <button type="submit" className="blog-submit-button">Submit</button>
+          <button type="submit" className="p-2 bg-blue-500 text-white rounded-lg">Submit</button>
         </form>
       )}
-      <div className="blog-previews">
+      <div className="flex flex-col gap-4">
         {blogs.map((blog) => (
           <BlogPreview
             key={blog.id}
