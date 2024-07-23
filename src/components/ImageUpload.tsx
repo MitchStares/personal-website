@@ -10,6 +10,7 @@ interface ImageUploadProps {
 const ImageUpload: React.FC<ImageUploadProps> = ({ onUpload }) => {
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -30,10 +31,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onUpload }) => {
         },
         (error) => {
           console.error('Upload failed:', error);
+          setError('Upload failed. Please try again.');
         },
         () => {
           getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
             onUpload(downloadURL);
+            setError(null);
           });
         }
       );
@@ -43,8 +46,9 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onUpload }) => {
   return (
     <div>
       <input type="file" onChange={handleFileChange} />
-      <button onClick={handleUpload}>Upload</button>
+      <button type="button" onClick={handleUpload}>Upload</button>
       {progress > 0 && <p>Upload progress: {progress}%</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
     </div>
   );
 };
