@@ -62,7 +62,7 @@ const BlogDetail: React.FC = () => {
         </div>
       ) : (
         <div>
-          {blog.imageUrl && <img src={blog.imageUrl} alt={blog.title} className="w-full h-auto rounded-lg mb-4" />}
+          {blog.imageUrl && <img src={blog.imageUrl} alt={blog.title} className="w-full h-64 object-cover rounded-lg mb-4" />}
           <h1 className="text-3xl font-bold mb-2">{blog.title}</h1>
           <p className="text-gray-500 mb-4">{new Date(blog.date).toLocaleDateString()}</p>
           <ReactMarkdown className="prose">{blog.content}</ReactMarkdown>
