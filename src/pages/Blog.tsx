@@ -17,6 +17,7 @@ interface BlogProps {
   user: any;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 const Blog: React.FC<BlogProps> = ({ user }) => {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [title, setTitle] = useState('');
