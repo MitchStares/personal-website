@@ -1,4 +1,3 @@
-// src/components/BlogDetail.tsx
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { fetchBlogById, updateBlog } from '../services/blogService';
@@ -6,7 +5,11 @@ import ReactMarkdown from 'react-markdown';
 import MarkdownEditor from './MarkdownEditor';
 import ImageUpload from './ImageUpload';
 
-const BlogDetail: React.FC = () => {
+interface BlogDetailProps {
+  user: any;
+}
+
+const BlogDetail: React.FC<BlogDetailProps> = ({ user }) => {
   const { id } = useParams<{ id: string }>();
   const [blog, setBlog] = useState<{ title: string; content: string; date: Date; imageUrl?: string } | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -66,7 +69,9 @@ const BlogDetail: React.FC = () => {
           <h1 className="text-3xl font-bold mb-2">{blog.title}</h1>
           <p className="text-gray-500 mb-4">{new Date(blog.date).toLocaleDateString()}</p>
           <ReactMarkdown className="prose">{blog.content}</ReactMarkdown>
-          <button onClick={() => setIsEditing(true)} className="mt-4 p-2 bg-blue-500 text-white rounded-lg">Edit</button>
+          {user && (
+            <button onClick={() => setIsEditing(true)} className="mt-4 p-2 bg-blue-500 text-white rounded-lg">Edit</button>
+          )}
         </div>
       )}
     </div>

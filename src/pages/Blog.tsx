@@ -1,8 +1,6 @@
-// src/pages/Blog.tsx
 import React, { useState, useEffect } from 'react';
 import { fetchBlogs, createBlog, deleteBlog } from '../services/blogService';
-import { auth } from '../firebaseConfig';
-import { onAuthStateChanged } from 'firebase/auth';
+import { ToastContainer, toast } from "react-toastify";
 import BlogPreview from '../components/BlogPreview';
 import MarkdownEditor from '../components/MarkdownEditor';
 import ImageUpload from '../components/ImageUpload';
@@ -15,12 +13,15 @@ interface Blog {
   imageUrl?: string;
 }
 
-const Blog: React.FC = () => {
+interface BlogProps {
+  user: any;
+}
+
+const Blog: React.FC<BlogProps> = ({ user }) => {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [imageUrl, setImageUrl] = useState('');
-  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     const getBlogs = async () => {
@@ -28,10 +29,7 @@ const Blog: React.FC = () => {
       setBlogs(response);
     };
 
-    onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      getBlogs();
-    });
+    getBlogs();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,7 +43,7 @@ const Blog: React.FC = () => {
       const response = await fetchBlogs();
       setBlogs(response);
     } else {
-      alert('You must be logged in to create a blog post.');
+      toast.error('You must be logged in to create a blog post.');
     }
   };
 
@@ -55,7 +53,7 @@ const Blog: React.FC = () => {
       const response = await fetchBlogs();
       setBlogs(response);
     } else {
-      alert('You must be logged in to delete a blog post.');
+      toast.error('You must be logged in to delete a blog post.');
     }
   };
 
@@ -91,6 +89,7 @@ const Blog: React.FC = () => {
           />
         ))}
       </div>
+      <ToastContainer />
     </div>
   );
 };
