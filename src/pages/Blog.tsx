@@ -4,6 +4,7 @@ import { ToastContainer, toast } from "react-toastify";
 import BlogPreview from '../components/BlogPreview';
 import MarkdownEditor from '../components/MarkdownEditor';
 import ImageUpload from '../components/ImageUpload';
+import { Link } from 'react-router-dom';
 
 interface Blog {
   id: string;
@@ -17,7 +18,6 @@ interface BlogProps {
   user: any;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-redeclare
 const Blog: React.FC<BlogProps> = ({ user }) => {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [title, setTitle] = useState('');
@@ -62,19 +62,22 @@ const Blog: React.FC<BlogProps> = ({ user }) => {
     <div className="max-w-4xl mx-auto p-4">
       <h1 className="text-3xl font-bold mb-4">Blog</h1>
       {user && (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 mb-8">
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Title"
-            required
-            className="p-2 border rounded-lg"
-          />
-          <MarkdownEditor value={content} onChange={setContent} />
-          <ImageUpload onUpload={setImageUrl} />
-          <button type="submit" className="p-2 bg-blue-500 text-white rounded-lg">Submit</button>
-        </form>
+        <>
+          <Link to="/blog-editor" className="mb-4 p-2 bg-blue-500 text-white rounded-lg inline-block">Create New Blog Post</Link>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4 mb-8">
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Title"
+              required
+              className="p-2 border rounded-lg"
+            />
+            <MarkdownEditor value={content} onChange={setContent} />
+            <ImageUpload onUpload={setImageUrl} />
+            <button type="submit" className="p-2 bg-blue-500 text-white rounded-lg">Submit</button>
+          </form>
+        </>
       )}
       <div className="flex flex-col gap-4">
         {blogs.map((blog) => (

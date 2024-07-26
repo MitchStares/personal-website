@@ -1,7 +1,6 @@
 // src/components/ImageUpload.tsx
 import React, { useState } from 'react';
-import { storage } from '../firebaseConfig';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { uploadImage } from '../services/imageService'; 
 
 interface ImageUploadProps {
   onUpload: (url: string) => void;
@@ -18,28 +17,16 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onUpload }) => {
     }
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (file) {
-      const storageRef = ref(storage, `images/${file.name}`);
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
-      uploadTask.on(
-        'state_changed',
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setProgress(progress);
-        },
-        (error) => {
-          console.error('Upload failed:', error);
-          setError('Upload failed. Please try again.');
-        },
-        () => {
-          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-            onUpload(downloadURL);
-            setError(null);
-          });
-        }
-      );
+      try {
+        const url = await uploadImage(file);
+        onUpload(url);
+        setError(null);
+      } catch (error) {
+        console.error('Upload failed:', error);
+        setError('Upload failed. Please try again.');
+      }
     }
   };
 
