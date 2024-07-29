@@ -1,9 +1,8 @@
+// src/pages/Blog.tsx
 import React, { useState, useEffect } from 'react';
 import { fetchBlogs, createBlog, deleteBlog } from '../services/blogService';
 import { ToastContainer, toast } from "react-toastify";
 import BlogPreview from '../components/BlogPreview';
-import MarkdownEditor from '../components/MarkdownEditor';
-import ImageUpload from '../components/ImageUpload';
 import { Link } from 'react-router-dom';
 
 interface Blog {
@@ -11,7 +10,7 @@ interface Blog {
   title: string;
   content: string;
   date: Date;
-  imageUrl?: string;
+  imageUrl: string | null;
 }
 
 interface BlogProps {
@@ -20,9 +19,6 @@ interface BlogProps {
 
 const Blog: React.FC<BlogProps> = ({ user }) => {
   const [blogs, setBlogs] = useState<Blog[]>([]);
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
 
   useEffect(() => {
     const getBlogs = async () => {
@@ -32,21 +28,6 @@ const Blog: React.FC<BlogProps> = ({ user }) => {
 
     getBlogs();
   }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (user) {
-      const newBlog = { title, content, date: new Date(), imageUrl };
-      await createBlog(newBlog);
-      setTitle('');
-      setContent('');
-      setImageUrl('');
-      const response = await fetchBlogs();
-      setBlogs(response);
-    } else {
-      toast.error('You must be logged in to create a blog post.');
-    }
-  };
 
   const handleDelete = async (id: string) => {
     if (user) {
@@ -62,22 +43,7 @@ const Blog: React.FC<BlogProps> = ({ user }) => {
     <div className="max-w-4xl mx-auto p-4">
       <h1 className="text-3xl font-bold mb-4">Blog</h1>
       {user && (
-        <>
-          <Link to="/blog-editor" className="mb-4 p-2 bg-blue-500 text-white rounded-lg inline-block">Create New Blog Post</Link>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4 mb-8">
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Title"
-              required
-              className="p-2 border rounded-lg"
-            />
-            <MarkdownEditor value={content} onChange={setContent} />
-            <ImageUpload onUpload={setImageUrl} />
-            <button type="submit" className="p-2 bg-blue-500 text-white rounded-lg">Submit</button>
-          </form>
-        </>
+        <Link to="/markdown-editor" className="mb-4 p-2 bg-blue-500 text-white rounded-lg inline-block">Create New Blog Post</Link>
       )}
       <div className="flex flex-col gap-4">
         {blogs.map((blog) => (

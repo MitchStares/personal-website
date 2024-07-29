@@ -7,7 +7,7 @@ interface BlogPreviewProps {
   title: string;
   summary: string;
   date: Date;
-  imageUrl?: string;
+  imageUrl: string | null;
   user: any;
   onDelete: (id: string) => void;
 }

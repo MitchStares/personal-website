@@ -7,7 +7,7 @@ interface Blog {
   title: string;
   content: string;
   date: Date;
-  imageUrl?: string;
+  imageUrl: string | null;
 }
 
 const blogCollectionRef = collection(db, 'blogs');
@@ -39,11 +39,11 @@ export const fetchBlogById = async (id: string): Promise<Blog | null> => {
   }
 };
 
-export const createBlog = async (blog: { title: string; content: string; date: Date; imageUrl?: string }) => {
+export const createBlog = async (blog: { title: string; content: string; date: Date; imageUrl: string | null }) => {
   return await addDoc(blogCollectionRef, blog);
 };
 
-export const updateBlog = async (id: string, blog: { title: string; content: string; date: Date; imageUrl?: string }) => {
+export const updateBlog = async (id: string, blog: { title: string; content: string; date: Date; imageUrl: string | null }) => {
   const blogDoc = doc(db, 'blogs', id);
   return await updateDoc(blogDoc, blog);
 };

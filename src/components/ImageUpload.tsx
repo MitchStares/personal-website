@@ -1,6 +1,6 @@
 // src/components/ImageUpload.tsx
 import React, { useState } from 'react';
-import { uploadImage } from '../services/imageService'; 
+import { uploadImage } from '../services/imageService'; // Import the uploadImage function
 
 interface ImageUploadProps {
   onUpload: (url: string) => void;
