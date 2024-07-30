@@ -1,12 +1,12 @@
-// src/components/BaseLayerSelector.tsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 interface BaseLayerSelectorProps {
   currentStyle: string;
   onStyleChange: (style: string) => void;
+  sidebarOpen: boolean;
 }
 
-const BaseLayerSelector: React.FC<BaseLayerSelectorProps> = ({ currentStyle, onStyleChange }) => {
+const BaseLayerSelector: React.FC<BaseLayerSelectorProps> = ({ currentStyle, onStyleChange, sidebarOpen }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -31,9 +31,18 @@ const BaseLayerSelector: React.FC<BaseLayerSelectorProps> = ({ currentStyle, onS
     { id: 'mapbox://styles/mapbox/satellite-v9', label: 'Satellite' },
   ];
 
+  useEffect(() => {
+    // Clear the timeout when the component unmounts
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div
-      className="absolute bottom-4 left-4 z-10"
+    className={`absolute bottom-4 ${sidebarOpen ? 'left-72' : 'left-4'} z-10 transition-all duration-300`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >

@@ -5,6 +5,7 @@ import StaticMap from 'react-map-gl';
 import { LineLayer } from '@deck.gl/layers';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import BaseLayerSelector from '../components/BaseLayerSelector';
+import Sidebar from '../components/Sidebar';
 
 const MAPBOX_ACCESS_TOKEN = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
 
@@ -27,7 +28,9 @@ const layers = [
 const MapPage: React.FC = () => {
   const [mapStyle, setMapStyle] = useState('mapbox://styles/mapbox/light-v9');
   const [mapHeight, setMapHeight] = useState('100vh');
+  const [geoJson, setGeoJson] = useState<any>(null);
   const navbarRef = useRef<HTMLDivElement>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -44,10 +47,29 @@ const MapPage: React.FC = () => {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
+  const handleFileUpload = (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    fetch('/process-shapefile', {
+      method: 'POST',
+      body: formData,
+    })
+    .then(response => response.json())
+    .then(data => {
+      setGeoJson(data);
+    })
+    .catch(error => {
+      console.error('Error:', error);
+    });
+  };
 
   return (
     <div ref={navbarRef}>
-      <div style={{ height: mapHeight }}>
+      <div className="relative flex">
+      <Sidebar onFileUpload={handleFileUpload} onToggleSidebar={setSidebarOpen} />
+      </div>
+      <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`} style={{ height: mapHeight }}>
         <DeckGL
           initialViewState={INITIAL_VIEW_STATE}
           controller={true}
@@ -62,6 +84,7 @@ const MapPage: React.FC = () => {
         <BaseLayerSelector
           currentStyle={mapStyle}
           onStyleChange={(style) => setMapStyle(style)}
+          sidebarOpen={sidebarOpen}
         />
       </div>
     </div>
