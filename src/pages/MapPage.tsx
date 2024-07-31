@@ -20,13 +20,9 @@ const INITIAL_VIEW_STATE = {
 const MapPage: React.FC = () => {
   const [mapStyle, setMapStyle] = useState('mapbox://styles/mapbox/light-v9');
   const [mapHeight, setMapHeight] = useState('100vh');
-  const [geoJson, setGeoJson] = useState<any>(null);
+  const [layers, setLayers] = useState<any[]>([]);
   const navbarRef = useRef<HTMLDivElement>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [layerVisible, setLayerVisible] = useState(true);
-  const [transparency, setTransparency] = useState(0.7);
-  const [fillColor, setFillColor] = useState([255, 140, 0]);
-  const [lineColor, setLineColor] = useState([255, 255, 255]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -43,64 +39,73 @@ const MapPage: React.FC = () => {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
-  // const handleFileUpload = (file: File) => {
-  //   const formData = new FormData();
-  //   formData.append('file', file);
 
-  //   fetch('/process-shapefile', {
-  //     method: 'POST',
-  //     body: formData,
-  //   })
-  //   .then(response => response.json())
-  //   .then(data => {
-  //     setGeoJson(data);
-  //   })
-  //   .catch(error => {
-  //     console.error('Error:', error);
-  //   });
-  // };
   const handleFileUpload = (file: File) => {
     const reader = new FileReader();
     reader.onload = (event) => {
       if (event.target?.result) {
         const json = JSON.parse(event.target.result as string);
-        setGeoJson(json);
+        setLayers(prevLayers => [
+          ...prevLayers,
+          {
+            id: `geojson-layer-${prevLayers.length}`,
+            name: `Layer ${prevLayers.length + 1}`,
+            data: json,
+            visible: true,
+            transparency: 0.7,
+            fillColor: [255, 140, 0],
+            lineColor: [255, 255, 255],
+            lineWidth: 1
+          }
+        ]);
       }
     };
     reader.readAsText(file);
   };
 
-  const layers = [
-    geoJson && new GeoJsonLayer({
-      id: 'geojson-layer',
-      data: geoJson,
-      visible: layerVisible,
+  const handleLayerSettingChange = (index: number, key: string, value: any) => {
+    setLayers(prevLayers => {
+      const newLayers = [...prevLayers];
+      newLayers[index] = { ...newLayers[index], [key]: value };
+      return newLayers;
+    });
+  };
+
+  const handleLayerRemove = (index: number) => {
+    setLayers(prevLayers => prevLayers.filter((_, i) => i !== index));
+  };
+
+  const renderedLayers = layers.map((layer, index) => (
+    new GeoJsonLayer({
+      id: layer.id,
+      data: layer.data,
+      visible: layer.visible,
       filled: true,
-      opacity: transparency,
-      getFillColor: [160, 160, 180, 200],
-      getLineColor: [0, 0, 0, 200],
+      opacity: layer.transparency,
+      getFillColor: layer.fillColor,
+      getLineColor: layer.lineColor,
+      lineWidthScale: layer.lineWidth,
       pointRadiusMinPixels: 5,
       getPointRadius: 100,
     })
-  ].filter(Boolean);
+  ));
 
   return (
     <div ref={navbarRef}>
       <div className="relative flex">
-      <Sidebar onFileUpload={handleFileUpload} onToggleSidebar={setSidebarOpen} layerVisible={layerVisible}
-        transparency={transparency}
-        fillColor={fillColor}
-        lineColor={lineColor}
-        onVisibilityChange={setLayerVisible}
-        onTransparencyChange={setTransparency}
-        onFillColorChange={setFillColor}
-        onLineColorChange={setLineColor}/>
+        <Sidebar
+          onFileUpload={handleFileUpload}
+          onToggleSidebar={setSidebarOpen}
+          layers={layers}
+          onLayerSettingChange={handleLayerSettingChange}
+          onRemoveLayer={handleLayerRemove}
+        />
       </div>
       <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`} style={{ height: mapHeight }}>
         <DeckGL
           initialViewState={INITIAL_VIEW_STATE}
           controller={true}
-          layers={layers}
+          layers={renderedLayers}
         >
           <StaticMap
             mapboxAccessToken={MAPBOX_ACCESS_TOKEN}
