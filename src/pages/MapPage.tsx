@@ -2,7 +2,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import DeckGL from '@deck.gl/react';
 import StaticMap from 'react-map-gl';
-import { LineLayer } from '@deck.gl/layers';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import BaseLayerSelector from '../components/BaseLayerSelector';
 import Sidebar from '../components/Sidebar';
@@ -18,20 +17,16 @@ const INITIAL_VIEW_STATE = {
   bearing: 0
 };
 
-const data = [
-  { sourcePosition: [-122.41669, 37.7853], targetPosition: [-122.41669, 37.781] }
-];
-
-const layers = [
-  new LineLayer({ id: 'line-layer', data })
-];
-
 const MapPage: React.FC = () => {
   const [mapStyle, setMapStyle] = useState('mapbox://styles/mapbox/light-v9');
   const [mapHeight, setMapHeight] = useState('100vh');
   const [geoJson, setGeoJson] = useState<any>(null);
   const navbarRef = useRef<HTMLDivElement>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [layerVisible, setLayerVisible] = useState(true);
+  const [transparency, setTransparency] = useState(0.7);
+  const [fillColor, setFillColor] = useState([255, 140, 0]);
+  const [lineColor, setLineColor] = useState([255, 255, 255]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -79,23 +74,27 @@ const MapPage: React.FC = () => {
     geoJson && new GeoJsonLayer({
       id: 'geojson-layer',
       data: geoJson,
-      pickable: true,
-      stroked: true,
+      visible: layerVisible,
       filled: true,
-      extruded: false,
-      lineWidthScale: 20,
-      lineWidthMinPixels: 2,
+      opacity: transparency,
       getFillColor: [160, 160, 180, 200],
       getLineColor: [0, 0, 0, 200],
+      pointRadiusMinPixels: 5,
       getPointRadius: 100,
-      pointRadiusScale: 1,
     })
   ].filter(Boolean);
 
   return (
     <div ref={navbarRef}>
       <div className="relative flex">
-      <Sidebar onFileUpload={handleFileUpload} onToggleSidebar={setSidebarOpen} />
+      <Sidebar onFileUpload={handleFileUpload} onToggleSidebar={setSidebarOpen} layerVisible={layerVisible}
+        transparency={transparency}
+        fillColor={fillColor}
+        lineColor={lineColor}
+        onVisibilityChange={setLayerVisible}
+        onTransparencyChange={setTransparency}
+        onFillColorChange={setFillColor}
+        onLineColorChange={setLineColor}/>
       </div>
       <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`} style={{ height: mapHeight }}>
         <DeckGL
