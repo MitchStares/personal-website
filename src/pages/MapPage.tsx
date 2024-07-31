@@ -23,6 +23,13 @@ const MapPage: React.FC = () => {
   const [layers, setLayers] = useState<any[]>([]);
   const navbarRef = useRef<HTMLDivElement>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [viewport, setViewport] = useState(INITIAL_VIEW_STATE);
+
+  const handleViewStateChange = (newViewState : any) => {
+    setViewport(newViewState);
+    // console.log('New view state:', newViewState);
+  }
+
 
   useEffect(() => {
     const handleResize = () => {
@@ -106,6 +113,7 @@ const MapPage: React.FC = () => {
           initialViewState={INITIAL_VIEW_STATE}
           controller={true}
           layers={renderedLayers}
+          onViewStateChange={handleViewStateChange}
         >
           <StaticMap
             mapboxAccessToken={MAPBOX_ACCESS_TOKEN}

@@ -70,6 +70,14 @@ const Sidebar: React.FC<SidebarProps> = ({
           {layers.map((layer, index) => (
             <div key={layer.id} className="mb-4">
               <div className="flex justify-between items-center mb-2">
+              <input
+                  type="checkbox"
+                  checked={layer.visible}
+                  onChange={() =>
+                    onLayerSettingChange(index, 'visible', !layer.visible)
+                  }
+                  className="form-checkbox h-5 w-5 text-blue-600 mr-2"
+                />
                 <input
                   type="text"
                   value={layer.name || `Layer ${index + 1}`}
@@ -91,7 +99,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               </div>
               {expandedLayers[index] && (
                 <div>
-                  {/* Layer Visibility Toggle */}
+                  {/* Layer Visibility Toggle
                   <div className="mb-4">
                     <label className="flex items-center">
                       <input
@@ -104,7 +112,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       />
                       <span className="ml-2 text-sm">Show Layer</span>
                     </label>
-                  </div>
+                  </div> */}
 
                   {/* Transparency Slider */}
                   <div className="mb-4">
