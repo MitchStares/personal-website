@@ -1,6 +1,6 @@
 // src/pages/Blog.tsx
 import React, { useState, useEffect } from 'react';
-import { fetchBlogs, createBlog, deleteBlog } from '../services/blogService';
+import { fetchBlogs, deleteBlog } from '../services/blogService';
 import { ToastContainer, toast } from "react-toastify";
 import BlogPreview from '../components/BlogPreview';
 import { Link } from 'react-router-dom';
@@ -17,6 +17,7 @@ interface BlogProps {
   user: any;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 const Blog: React.FC<BlogProps> = ({ user }) => {
   const [blogs, setBlogs] = useState<Blog[]>([]);
 

@@ -8,7 +8,7 @@ import Home from './pages/Home';
 import Blog from './pages/Blog';
 import BlogDetail from './components/BlogDetail';
 import MarkdownEditorPage from './pages/MarkdownEditorPage';
-import BudgetTracker from './pages/BudgetTracker';
+import MapPage from './pages/MapPage';
 import Auth from './components/Auth';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -26,14 +26,16 @@ const App: React.FC = () => {
   return (
     <Router>
       <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/blog" element={<Blog user={user} />} />
-        <Route path="/blog/:id" element={<BlogDetail user={user} />} />
-        <Route path="/markdown-editor" element={<ProtectedRoute user={user}><MarkdownEditorPage user={user} /></ProtectedRoute>} />
-        <Route path="/budget-tracker" element={<BudgetTracker />} />
-        <Route path="/auth" element={<Auth />} />
-      </Routes>
+      <div className="pt-16">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/blog" element={<Blog user={user} />} />
+          <Route path="/blog/:id" element={<BlogDetail user={user} />} />
+          <Route path="/markdown-editor" element={<ProtectedRoute user={user}><MarkdownEditorPage user={user} /></ProtectedRoute>} />
+          <Route path="/map" element={<MapPage />} />
+          <Route path="/auth" element={<Auth />} />
+        </Routes>
+      </div>
     </Router>
   );
 };
