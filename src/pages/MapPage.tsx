@@ -6,6 +6,7 @@ import { LineLayer } from '@deck.gl/layers';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import BaseLayerSelector from '../components/BaseLayerSelector';
 import Sidebar from '../components/Sidebar';
+import { GeoJsonLayer } from 'deck.gl';
 
 const MAPBOX_ACCESS_TOKEN = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
 
@@ -47,22 +48,49 @@ const MapPage: React.FC = () => {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
-  const handleFileUpload = (file: File) => {
-    const formData = new FormData();
-    formData.append('file', file);
+  // const handleFileUpload = (file: File) => {
+  //   const formData = new FormData();
+  //   formData.append('file', file);
 
-    fetch('/process-shapefile', {
-      method: 'POST',
-      body: formData,
-    })
-    .then(response => response.json())
-    .then(data => {
-      setGeoJson(data);
-    })
-    .catch(error => {
-      console.error('Error:', error);
-    });
+  //   fetch('/process-shapefile', {
+  //     method: 'POST',
+  //     body: formData,
+  //   })
+  //   .then(response => response.json())
+  //   .then(data => {
+  //     setGeoJson(data);
+  //   })
+  //   .catch(error => {
+  //     console.error('Error:', error);
+  //   });
+  // };
+  const handleFileUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        const json = JSON.parse(event.target.result as string);
+        setGeoJson(json);
+      }
+    };
+    reader.readAsText(file);
   };
+
+  const layers = [
+    geoJson && new GeoJsonLayer({
+      id: 'geojson-layer',
+      data: geoJson,
+      pickable: true,
+      stroked: true,
+      filled: true,
+      extruded: false,
+      lineWidthScale: 20,
+      lineWidthMinPixels: 2,
+      getFillColor: [160, 160, 180, 200],
+      getLineColor: [0, 0, 0, 200],
+      getPointRadius: 100,
+      pointRadiusScale: 1,
+    })
+  ].filter(Boolean);
 
   return (
     <div ref={navbarRef}>
