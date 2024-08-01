@@ -1,11 +1,13 @@
 // src/pages/MapPage.tsx
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import DeckGL from '@deck.gl/react';
 import StaticMap from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import BaseLayerSelector from '../components/BaseLayerSelector';
 import Sidebar from '../components/Sidebar';
-import { GeoJsonLayer } from 'deck.gl';
+import { GeoJsonLayer, WebMercatorViewport } from 'deck.gl';
+import { ViewStateChangeParameters } from '@deck.gl/core'
+import * as turf from '@turf/turf';
 
 const MAPBOX_ACCESS_TOKEN = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
 
@@ -24,14 +26,61 @@ const MapPage: React.FC = () => {
   const navbarRef = useRef<HTMLDivElement>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [viewport, setViewport] = useState(INITIAL_VIEW_STATE);
+  const [visibleFeatureCount, setVisibleFeatureCount] = useState(0);
 
-  const handleViewStateChange = (newViewState : any) => {
-    setViewport(newViewState);
-    // console.log('New view state:', newViewState);
+  const handleViewStateChange = (params: ViewStateChangeParameters<any>) => {
+    setViewport(params.viewState);
+    console.log('New view state:', params.viewState);
   }
 
+  const countVisibleFeatures = useMemo(() => {
+    console.log('Recalculating visible features');
+    if (layers.length === 0) return 0;
+    const webMercatorViewport = new WebMercatorViewport(viewport);
+    const bounds = webMercatorViewport.getBounds();
+    console.log('Current bounds:' , bounds)
+
+    const viewportBbox = turf.bboxPolygon([
+      bounds[0], bounds[1], bounds[2], bounds[3]
+    ]);
+
+    let count = 0;
+    layers.forEach(layer => {
+      if (layer.visible && layer.data && layer.data.features) {
+        const layerCount = layer.data.features.filter((feature: any) => {
+          switch (feature.geometry.type) {
+            case 'Point':
+              const [lon, lat] = feature.geometry.coordinates;
+              return lon >= bounds[0] && lon <= bounds[2] && lat >= bounds[1] && lat <= bounds[3];
+            
+            case 'Polygon':
+            case 'MultiPolygon':
+              return turf.booleanIntersects(feature, viewportBbox);
+
+            case 'LineString':
+            case 'MultiLineString':
+              return turf.booleanCrosses(feature, viewportBbox) || turf.booleanWithin(feature, viewportBbox);
+
+            default:
+              console.warn(`Unsupported geometry type: ${feature.geometry.type}`);
+              return false;
+          }
+        
+        }).length;
+        console.log(`Layer ${layer.name} visible features:`, layerCount);
+        count += layerCount
+
+      }
+    });
+    console.log('Total visible features:', count);
+    return count;
+  }, [layers, viewport]);
 
   useEffect(() => {
+    console.log('Updating visible feature count:', countVisibleFeatures);
+    setVisibleFeatureCount(countVisibleFeatures);
+
+
     const handleResize = () => {
       if (navbarRef.current) {
         const navbarHeight = navbarRef.current.offsetHeight;
@@ -45,7 +94,7 @@ const MapPage: React.FC = () => {
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  }, [countVisibleFeatures]);
 
   const handleFileUpload = (file: File) => {
     const reader = new FileReader();
@@ -126,6 +175,9 @@ const MapPage: React.FC = () => {
           onStyleChange={(style) => setMapStyle(style)}
           sidebarOpen={sidebarOpen}
         />
+        <div className="absolute bottom-4 right-4 bg-white p-2 rounded shadow">
+        Visible Features: {visibleFeatureCount}
+        </div>
       </div>
     </div>
   );
