@@ -7,7 +7,6 @@ import BaseLayerSelector from '../components/BaseLayerSelector';
 import Sidebar from '../components/Sidebar';
 import { GeoJsonLayer, WebMercatorViewport } from 'deck.gl';
 import { ViewStateChangeParameters } from '@deck.gl/core'
-import * as turf from '@turf/turf';
 
 const MAPBOX_ACCESS_TOKEN = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
 
@@ -40,32 +39,16 @@ const MapPage: React.FC = () => {
     const bounds = webMercatorViewport.getBounds();
     console.log('Current bounds:' , bounds)
 
-    const viewportBbox = turf.bboxPolygon([
-      bounds[0], bounds[1], bounds[2], bounds[3]
-    ]);
-
     let count = 0;
     layers.forEach(layer => {
       if (layer.visible && layer.data && layer.data.features) {
         const layerCount = layer.data.features.filter((feature: any) => {
-          switch (feature.geometry.type) {
-            case 'Point':
-              const [lon, lat] = feature.geometry.coordinates;
-              return lon >= bounds[0] && lon <= bounds[2] && lat >= bounds[1] && lat <= bounds[3];
-            
-            case 'Polygon':
-            case 'MultiPolygon':
-              return turf.booleanIntersects(feature, viewportBbox);
-
-            case 'LineString':
-            case 'MultiLineString':
-              return turf.booleanCrosses(feature, viewportBbox) || turf.booleanWithin(feature, viewportBbox);
-
-            default:
-              console.warn(`Unsupported geometry type: ${feature.geometry.type}`);
-              return false;
+          if (feature.geometry.type === 'Point') {
+            const [lon, lat] = feature.geometry.coordinates;
+            return lon >= bounds[0] && lon <= bounds[2] && lat >= bounds[1] && lat <= bounds[3];
           }
-        
+          //other geometry types here
+          return true;
         }).length;
         console.log(`Layer ${layer.name} visible features:`, layerCount);
         count += layerCount
