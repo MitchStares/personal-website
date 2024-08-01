@@ -21,23 +21,25 @@ const INITIAL_VIEW_STATE = {
 const MapPage: React.FC = () => {
   const [mapStyle, setMapStyle] = useState('mapbox://styles/mapbox/light-v9');
   const [mapHeight, setMapHeight] = useState('100vh');
-  const [layers, setLayers] = useState<any[]>([]);
-  const navbarRef = useRef<HTMLDivElement>(null);
+  const [layers, setLayers] = useState<any[]>([]); 
+  const navbarRef = useRef<HTMLDivElement>(null); // needed to calculate map height and avoid navbar
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [viewport, setViewport] = useState(INITIAL_VIEW_STATE);
   const [visibleFeatureCount, setVisibleFeatureCount] = useState(0);
+  const [hasPointGeometry, setHasPointGeometry] = useState(false); //to track layers with point and conditionally render counter
+
 
   const handleViewStateChange = (params: ViewStateChangeParameters<any>) => {
     setViewport(params.viewState);
-    console.log('New view state:', params.viewState);
+    // console.log('New view state:', params.viewState);
   }
 
   const countVisibleFeatures = useMemo(() => {
-    console.log('Recalculating visible features');
+    // console.log('Recalculating visible features');
     if (layers.length === 0) return 0;
     const webMercatorViewport = new WebMercatorViewport(viewport);
     const bounds = webMercatorViewport.getBounds();
-    console.log('Current bounds:' , bounds)
+    // console.log('Current bounds:' , bounds)
 
     let count = 0;
     layers.forEach(layer => {
@@ -50,19 +52,23 @@ const MapPage: React.FC = () => {
           //other geometry types here
           return true;
         }).length;
-        console.log(`Layer ${layer.name} visible features:`, layerCount);
+        // console.log(`Layer ${layer.name} visible features:`, layerCount);
         count += layerCount
 
       }
     });
-    console.log('Total visible features:', count);
+    // console.log('Total visible features:', count);
     return count;
   }, [layers, viewport]);
 
   useEffect(() => {
-    console.log('Updating visible feature count:', countVisibleFeatures);
+    // console.log('Updating visible feature count:', countVisibleFeatures);
     setVisibleFeatureCount(countVisibleFeatures);
 
+    const hasPoints = layers.some(layer =>
+      layer.data.features.some((feature: any) => feature.geometry.type === 'Point')
+    );
+    setHasPointGeometry(hasPoints);
 
     const handleResize = () => {
       if (navbarRef.current) {
@@ -77,7 +83,7 @@ const MapPage: React.FC = () => {
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [countVisibleFeatures]);
+  }, [countVisibleFeatures, layers]);
 
   const handleFileUpload = (file: File) => {
     const reader = new FileReader();
@@ -158,9 +164,10 @@ const MapPage: React.FC = () => {
           onStyleChange={(style) => setMapStyle(style)}
           sidebarOpen={sidebarOpen}
         />
+        {hasPointGeometry &&(
         <div className="absolute bottom-4 right-4 bg-white p-2 rounded shadow">
         Visible Features: {visibleFeatureCount}
-        </div>
+        </div>)}
       </div>
     </div>
   );
