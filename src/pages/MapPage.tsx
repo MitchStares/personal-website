@@ -1,5 +1,5 @@
 // src/pages/MapPage.tsx
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import DeckGL from '@deck.gl/react';
 import StaticMap from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -8,6 +8,8 @@ import Sidebar from '../components/Sidebar';
 import { GeoJsonLayer, WebMercatorViewport } from 'deck.gl';
 import { ViewStateChangeParameters } from '@deck.gl/core'
 import * as turf from '@turf/turf';
+import RBush from 'rbush';
+import debounce  from 'lodash/debounce';
 
 const MAPBOX_ACCESS_TOKEN = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
 
@@ -18,6 +20,13 @@ const INITIAL_VIEW_STATE = {
   pitch: 0,
   bearing: 0
 };
+interface RBushItem {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+  feature: any;
+}
 
 const MapPage: React.FC = () => {
   const [mapStyle, setMapStyle] = useState('mapbox://styles/mapbox/light-v9');
@@ -27,59 +36,86 @@ const MapPage: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [viewport, setViewport] = useState(INITIAL_VIEW_STATE);
   const [visibleFeatureCount, setVisibleFeatureCount] = useState(0);
+  const [spatialIndex, setSpatialIndex] = useState<RBush<RBushItem> |null>(null);
 
-  const handleViewStateChange = (params: ViewStateChangeParameters<any>) => {
-    setViewport(params.viewState);
-    console.log('New view state:', params.viewState);
-  }
-
-  const countVisibleFeatures = useMemo(() => {
-    console.log('Recalculating visible features');
-    if (layers.length === 0) return 0;
-    const webMercatorViewport = new WebMercatorViewport(viewport);
-    const bounds = webMercatorViewport.getBounds();
-    console.log('Current bounds:' , bounds)
-
-    const viewportBbox = turf.bboxPolygon([
-      bounds[0], bounds[1], bounds[2], bounds[3]
-    ]);
-
-    let count = 0;
-    layers.forEach(layer => {
-      if (layer.visible && layer.data && layer.data.features) {
-        const layerCount = layer.data.features.filter((feature: any) => {
-          switch (feature.geometry.type) {
-            case 'Point':
-              const [lon, lat] = feature.geometry.coordinates;
-              return lon >= bounds[0] && lon <= bounds[2] && lat >= bounds[1] && lat <= bounds[3];
-            
-            case 'Polygon':
-            case 'MultiPolygon':
-              return turf.booleanIntersects(feature, viewportBbox);
-
-            case 'LineString':
-            case 'MultiLineString':
-              return turf.booleanCrosses(feature, viewportBbox) || turf.booleanWithin(feature, viewportBbox);
-
-            default:
-              console.warn(`Unsupported geometry type: ${feature.geometry.type}`);
-              return false;
-          }
-        
-        }).length;
-        console.log(`Layer ${layer.name} visible features:`, layerCount);
-        count += layerCount
-
-      }
-    });
-    console.log('Total visible features:', count);
-    return count;
-  }, [layers, viewport]);
 
   useEffect(() => {
-    console.log('Updating visible feature count:', countVisibleFeatures);
-    setVisibleFeatureCount(countVisibleFeatures);
+    const index = new RBush<RBushItem>();
+    layers.forEach(layer => {
+      if (layer.data && layer.data.features) {
+        layer.data.features.forEach((feature: any) => {
+          const bbox = turf.bbox(feature);
+          index.insert({
+            minX: bbox[0],
+            minY: bbox[1],
+            maxX: bbox[2],
+            maxY: bbox[3],
+            feature: feature
+          });
+        });
+      }
+    });
+    setSpatialIndex(index);
+  }, [layers]);
 
+  const countVisibleFeatures = useCallback((viewportBounds: [number, number, number, number]) => {
+    if (!spatialIndex) return 0;
+
+    const viewportFeatures = spatialIndex.search({
+      minX: viewportBounds[0],
+      minY: viewportBounds[1],
+      maxX: viewportBounds[2],
+      maxY: viewportBounds[3]
+    });
+
+    const viewportBbox = turf.bboxPolygon(viewportBounds);
+
+    return viewportFeatures.filter(item => {
+      const feature = item.feature;
+      switch (feature.geometry.type) {
+        case 'Point':
+          return true; // Already filtered by RBush
+        case 'Polygon':
+        case 'MultiPolygon':
+          return turf.booleanIntersects(feature, viewportBbox);
+        case 'LineString':
+        case 'MultiLineString':
+          return turf.booleanCrosses(feature, viewportBbox) || turf.booleanWithin(feature, viewportBbox);
+        default:
+          return false;
+      }
+    }).length;
+  }, [spatialIndex]);
+
+  const debouncedUpdateVisibleFeatures = useMemo(
+    () => debounce((bounds: [number, number, number, number]) => {
+      const count = countVisibleFeatures(bounds);
+      setVisibleFeatureCount(count);
+    }, 200),
+    [countVisibleFeatures]
+  );
+
+  const handleViewStateChange = (params: ViewStateChangeParameters<any>) => {
+    const newViewport = params.viewState;
+    setViewport(newViewport);
+
+    const webMercatorViewport = new WebMercatorViewport(newViewport);
+    const bounds = webMercatorViewport.getBounds();
+  
+    // Check if bounds is an array of arrays
+    if (Array.isArray(bounds) && Array.isArray(bounds[0]) && Array.isArray(bounds[1])) {
+      const [[minX, minY], [maxX, maxY]] = bounds;
+      debouncedUpdateVisibleFeatures([minX, minY, maxX, maxY]);
+    } else if (Array.isArray(bounds) && bounds.length === 4) {
+      // If bounds is a flat array of 4 numbers
+      debouncedUpdateVisibleFeatures(bounds as [number, number, number, number]);
+    } else {
+      console.error('Unexpected bounds format:', bounds);
+    }
+  };
+  
+
+  useEffect(() => {
 
     const handleResize = () => {
       if (navbarRef.current) {
