@@ -1,15 +1,9 @@
-// src/pages/MapPage.tsx
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import DeckGL from '@deck.gl/react';
-import StaticMap from 'react-map-gl';
+import React, { useState, useRef, useEffect } from 'react';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import BaseLayerSelector from '../components/BaseLayerSelector';
 import Sidebar from '../components/Sidebar';
-import { GeoJsonLayer, WebMercatorViewport } from 'deck.gl';
-import { ViewStateChangeParameters } from '@deck.gl/core'
-import * as turf from '@turf/turf';
+import MapView from '../components/MapView';
 import RBush from 'rbush';
-import debounce  from 'lodash/debounce';
+import * as turf from '@turf/turf';
 
 const MAPBOX_ACCESS_TOKEN = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
 
@@ -20,6 +14,7 @@ const INITIAL_VIEW_STATE = {
   pitch: 0,
   bearing: 0
 };
+
 interface RBushItem {
   minX: number;
   minY: number;
@@ -35,9 +30,7 @@ const MapPage: React.FC = () => {
   const navbarRef = useRef<HTMLDivElement>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [viewport, setViewport] = useState(INITIAL_VIEW_STATE);
-  const [visibleFeatureCount, setVisibleFeatureCount] = useState(0);
-  const [spatialIndex, setSpatialIndex] = useState<RBush<RBushItem> |null>(null);
-
+  const [spatialIndex, setSpatialIndex] = useState<RBush<RBushItem> | null>(null);
 
   useEffect(() => {
     const index = new RBush<RBushItem>();
@@ -58,65 +51,7 @@ const MapPage: React.FC = () => {
     setSpatialIndex(index);
   }, [layers]);
 
-  const countVisibleFeatures = useCallback((viewportBounds: [number, number, number, number]) => {
-    if (!spatialIndex) return 0;
-
-    const viewportFeatures = spatialIndex.search({
-      minX: viewportBounds[0],
-      minY: viewportBounds[1],
-      maxX: viewportBounds[2],
-      maxY: viewportBounds[3]
-    });
-
-    const viewportBbox = turf.bboxPolygon(viewportBounds);
-
-    return viewportFeatures.filter(item => {
-      const feature = item.feature;
-      switch (feature.geometry.type) {
-        case 'Point':
-          return true; // Already filtered by RBush
-        case 'Polygon':
-        case 'MultiPolygon':
-          return turf.booleanIntersects(feature, viewportBbox);
-        case 'LineString':
-        case 'MultiLineString':
-          return turf.booleanCrosses(feature, viewportBbox) || turf.booleanWithin(feature, viewportBbox);
-        default:
-          return false;
-      }
-    }).length;
-  }, [spatialIndex]);
-
-  const debouncedUpdateVisibleFeatures = useMemo(
-    () => debounce((bounds: [number, number, number, number]) => {
-      const count = countVisibleFeatures(bounds);
-      setVisibleFeatureCount(count);
-    }, 200),
-    [countVisibleFeatures]
-  );
-
-  const handleViewStateChange = (params: ViewStateChangeParameters<any>) => {
-    const newViewport = params.viewState;
-    setViewport(newViewport);
-
-    const webMercatorViewport = new WebMercatorViewport(newViewport);
-    const bounds = webMercatorViewport.getBounds();
-  
-    // Check if bounds is an array of arrays
-    if (Array.isArray(bounds) && Array.isArray(bounds[0]) && Array.isArray(bounds[1])) {
-      const [[minX, minY], [maxX, maxY]] = bounds;
-      debouncedUpdateVisibleFeatures([minX, minY, maxX, maxY]);
-    } else if (Array.isArray(bounds) && bounds.length === 4) {
-      // If bounds is a flat array of 4 numbers
-      debouncedUpdateVisibleFeatures(bounds as [number, number, number, number]);
-    } else {
-      console.error('Unexpected bounds format:', bounds);
-    }
-  };
-  
-
   useEffect(() => {
-
     const handleResize = () => {
       if (navbarRef.current) {
         const navbarHeight = navbarRef.current.offsetHeight;
@@ -130,7 +65,7 @@ const MapPage: React.FC = () => {
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [countVisibleFeatures]);
+  }, []);
 
   const handleFileUpload = (file: File) => {
     const reader = new FileReader();
@@ -167,21 +102,6 @@ const MapPage: React.FC = () => {
     setLayers(prevLayers => prevLayers.filter((_, i) => i !== index));
   };
 
-  const renderedLayers = layers.map((layer, index) => (
-    new GeoJsonLayer({
-      id: layer.id,
-      data: layer.data,
-      visible: layer.visible,
-      filled: true,
-      opacity: layer.transparency,
-      getFillColor: layer.fillColor,
-      getLineColor: layer.lineColor,
-      lineWidthScale: layer.lineWidth,
-      pointRadiusMinPixels: 5,
-      getPointRadius: 100,
-    })
-  ));
-
   return (
     <div ref={navbarRef}>
       <div className="relative flex">
@@ -194,26 +114,20 @@ const MapPage: React.FC = () => {
         />
       </div>
       <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`} style={{ height: mapHeight }}>
-        <DeckGL
+        {MAPBOX_ACCESS_TOKEN ?(
+       <MapView
           initialViewState={INITIAL_VIEW_STATE}
-          controller={true}
-          layers={renderedLayers}
-          onViewStateChange={handleViewStateChange}
-        >
-          <StaticMap
-            mapboxAccessToken={MAPBOX_ACCESS_TOKEN}
-            mapStyle={mapStyle}
-            style={{ height: '100%' }}
-          />
-        </DeckGL>
-        <BaseLayerSelector
-          currentStyle={mapStyle}
-          onStyleChange={(style) => setMapStyle(style)}
+          mapboxAccessToken={MAPBOX_ACCESS_TOKEN}
+          mapStyle={mapStyle}
+          layers={layers}
+          spatialIndex={spatialIndex}
+          onViewStateChange={setViewport}
+          onStyleChange={setMapStyle}
           sidebarOpen={sidebarOpen}
         />
-        <div className="absolute bottom-4 right-4 bg-white p-2 rounded shadow">
-        Visible Features: {visibleFeatureCount}
-        </div>
+        ) : (
+          <div> Mapbox access token is missing. Please check environment variables. </div>
+        )} 
       </div>
     </div>
   );
