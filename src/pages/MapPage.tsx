@@ -76,11 +76,22 @@ const MapPage: React.FC = () => {
     reader.onload = (event) => {
       if (event.target?.result) {
         const json = JSON.parse(event.target.result as string);
+        const layerId = `geojson-layer-${layers.length}`;
+        const layerName = `Layer ${layers.length + 1}`;
+
+        json.features = json.features.map((feature: any) => ({
+          ...feature,
+          properties: {
+            ...feature.properties,
+            layerId: layerId
+          }
+        }));
+
         setLayers(prevLayers => [
           ...prevLayers,
           {
-            id: `geojson-layer-${prevLayers.length}`,
-            name: `Layer ${prevLayers.length + 1}`,
+            id: layerId,
+            name: layerName,
             data: json,
             visible: true,
             transparency: 0.7,
@@ -99,6 +110,18 @@ const MapPage: React.FC = () => {
     setLayers(prevLayers => {
       const newLayers = [...prevLayers];
       newLayers[index] = { ...newLayers[index], [key]: value };
+
+      if (key === 'name') {
+        const layerId = newLayers[index].id;
+        newLayers[index].data.features = newLayers[index].data.features.map((feature: any) => ({
+          ...feature,
+          properties: {
+            ...feature.properties,
+            layerId: layerId
+          }
+        }));
+      }
+
       return newLayers;
     });
   };

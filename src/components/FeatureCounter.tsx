@@ -1,12 +1,22 @@
+// FeatureCounter.tsx
 import React from 'react';
 
-interface FeatureCounterProps {
+interface LayerCount {
+  name: string;
   count: number;
 }
-// Component to visualise the features counted in MapView. Will expand to more complex component. 
-const FeatureCounter: React.FC<FeatureCounterProps> = ({ count }) => (
+
+interface FeatureCounterProps {
+  layerCounts: LayerCount[];
+}
+
+const FeatureCounter: React.FC<FeatureCounterProps> = ({ layerCounts }) => (
   <div className="absolute bottom-4 right-4 bg-white p-2 rounded shadow">
-    Visible Features: {count}
+    {layerCounts.map((layerCount, index) => (
+      <div key={index}>
+        {layerCount.name}: {layerCount.count}
+      </div>
+    ))}
   </div>
 );
 

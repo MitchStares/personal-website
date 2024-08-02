@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import DeckGL from '@deck.gl/react';
 import StaticMap from 'react-map-gl';
 import { GeoJsonLayer, WebMercatorViewport } from 'deck.gl';
@@ -30,6 +30,11 @@ interface RBushItem {
   feature: any;
 }
 
+interface LayerCount {
+  name: string;
+  count: number;
+}
+
 const MapView: React.FC<MapViewProps> = ({
   initialViewState,
   mapboxAccessToken,
@@ -40,10 +45,12 @@ const MapView: React.FC<MapViewProps> = ({
   onStyleChange,
   sidebarOpen
 }) => {
-  const [visibleFeatureCount, setVisibleFeatureCount] = React.useState(0);
 
-  const countVisibleFeatures = useCallback((viewportBounds: [number, number, number, number]) => {
-    if (!spatialIndex) return 0;
+  const [layerCounts, setLayerCounts] = useState<LayerCount[]>([]);
+  // const [visibleFeatureCount, setVisibleFeatureCount] = React.useState(0);
+
+  const countVisibleFeatures = useCallback((viewportBounds: [number, number, number, number]): LayerCount[] => {
+    if (!spatialIndex) return [];
 
     const viewportFeatures = spatialIndex.search({
       minX: viewportBounds[0],
@@ -55,28 +62,36 @@ const MapView: React.FC<MapViewProps> = ({
     const viewportBbox = turf.bboxPolygon(viewportBounds); 
 
     //filtering spatialIndex using intersect for polygon and cross or within for line. Point not needed as its a simple calculation
-    return viewportFeatures.filter(item => {
-      const feature = item.feature;
-      switch (feature.geometry.type) {
-        case 'Point':
-          return true;
-        case 'Polygon':
-        case 'MultiPolygon':
-          return turf.booleanIntersects(feature, viewportBbox);
-        case 'LineString':
-        case 'MultiLineString':
-          return turf.booleanCrosses(feature, viewportBbox) || turf.booleanWithin(feature, viewportBbox);
-        default:
-          return false;
-      }
-    }).length;
-  }, [spatialIndex]);
+    const counts = layers.map(layer => {
+      const layerFeatures = viewportFeatures.filter(item => item.feature.properties.layerId === layer.id);
+      const visibleCount = layerFeatures.filter(item => {
+        const feature = item.feature;
+        switch (feature.geometry.type) {
+          case 'Point':
+            return true;
+          case 'Polygon':
+          case 'MultiPolygon':
+            return turf.booleanIntersects(feature, viewportBbox);
+          case 'LineString':
+          case 'MultiLineString':
+            return turf.booleanCrosses(feature, viewportBbox) || turf.booleanWithin(feature, viewportBbox);
+          default:
+            return false;
+        }
+      }).length;
+
+      return { name: layer.name, count: visibleCount };
+    });
+
+    return counts;
+  }, [spatialIndex, layers]);
+
 
   // Our mouse abuse function. Waits until 200ms have passed since viewportBounds has been updated.
   const debouncedUpdateVisibleFeatures = useMemo(
     () => debounce((bounds: [number, number, number, number]) => {
-      const count = countVisibleFeatures(bounds);
-      setVisibleFeatureCount(count);
+      const counts = countVisibleFeatures(bounds);
+      setLayerCounts(counts);
     }, 200),
     [countVisibleFeatures]
   );
@@ -136,7 +151,7 @@ const MapView: React.FC<MapViewProps> = ({
         onStyleChange={onStyleChange}
         sidebarOpen={sidebarOpen}
       />
-      <FeatureCounter count={visibleFeatureCount} />
+      <FeatureCounter layerCounts={layerCounts} />
     </>
   );
 };
