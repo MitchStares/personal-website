@@ -3,12 +3,13 @@ import DeckGL from '@deck.gl/react';
 import StaticMap from 'react-map-gl';
 import { GeoJsonLayer, WebMercatorViewport } from 'deck.gl';
 import { ViewStateChangeParameters } from '@deck.gl/core';
-import * as turf from '@turf/turf';
-import RBush from 'rbush';
-import debounce from 'lodash/debounce';
+import * as turf from '@turf/turf'; //Spatial Calcs
+import RBush from 'rbush'; // Quick Feature Culling
+import debounce from 'lodash/debounce'; // Mouse Abuse delay
 import FeatureCounter from './FeatureCounter';
 import BaseLayerSelector from './BaseLayerSelector';
 
+//Props coming from MapPage
 interface MapViewProps {
   initialViewState: any;
   mapboxAccessToken: string;
@@ -20,6 +21,7 @@ interface MapViewProps {
   sidebarOpen: boolean;
 }
 
+//RBush or typescript gets cranky unless it has its own structure. Wont take an any
 interface RBushItem {
   minX: number;
   minY: number;
@@ -50,8 +52,9 @@ const MapView: React.FC<MapViewProps> = ({
       maxY: viewportBounds[3]
     });
 
-    const viewportBbox = turf.bboxPolygon(viewportBounds);
+    const viewportBbox = turf.bboxPolygon(viewportBounds); 
 
+    //filtering spatialIndex using intersect for polygon and cross or within for line. Point not needed as its a simple calculation
     return viewportFeatures.filter(item => {
       const feature = item.feature;
       switch (feature.geometry.type) {
@@ -69,6 +72,7 @@ const MapView: React.FC<MapViewProps> = ({
     }).length;
   }, [spatialIndex]);
 
+  // Our mouse abuse function. Waits until 200ms have passed since viewportBounds has been updated.
   const debouncedUpdateVisibleFeatures = useMemo(
     () => debounce((bounds: [number, number, number, number]) => {
       const count = countVisibleFeatures(bounds);
@@ -77,13 +81,16 @@ const MapView: React.FC<MapViewProps> = ({
     [countVisibleFeatures]
   );
 
+  //Just collecting viewState from viewport. No need for anythign else. 
   const handleViewStateChange = (params: ViewStateChangeParameters<any>) => {
     const newViewport = params.viewState;
     onViewStateChange(newViewport);
 
+    //Convert viewport to webmercator
     const webMercatorViewport = new WebMercatorViewport(newViewport);
     const bounds = webMercatorViewport.getBounds();
   
+    //Handling different outputs from webmercatorviewport so debounce doesnt freak out
     if (Array.isArray(bounds) && Array.isArray(bounds[0]) && Array.isArray(bounds[1])) {
       const [[minX, minY], [maxX, maxY]] = bounds;
       debouncedUpdateVisibleFeatures([minX, minY, maxX, maxY]);
@@ -94,6 +101,7 @@ const MapView: React.FC<MapViewProps> = ({
     }
   };
 
+  //Iterating through the layers array using map() and rendering as geojsonlayers.
   const renderedLayers = layers.map((layer) => (
     new GeoJsonLayer({
       id: layer.id,

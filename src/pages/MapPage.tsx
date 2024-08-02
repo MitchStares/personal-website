@@ -15,6 +15,7 @@ const INITIAL_VIEW_STATE = {
   bearing: 0
 };
 
+//Rbush/Typescript likes to be precious. Needs it own structure
 interface RBushItem {
   minX: number;
   minY: number;
@@ -27,11 +28,12 @@ const MapPage: React.FC = () => {
   const [mapStyle, setMapStyle] = useState('mapbox://styles/mapbox/light-v9');
   const [mapHeight, setMapHeight] = useState('100vh');
   const [layers, setLayers] = useState<any[]>([]);
-  const navbarRef = useRef<HTMLDivElement>(null);
+  const navbarRef = useRef<HTMLDivElement>(null); //Needed for map canvas height calculation to avoid navbar
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [viewport, setViewport] = useState(INITIAL_VIEW_STATE);
   const [spatialIndex, setSpatialIndex] = useState<RBush<RBushItem> | null>(null);
 
+  //Creating the spatial index for each feature using RBush for use in MapView
   useEffect(() => {
     const index = new RBush<RBushItem>();
     layers.forEach(layer => {
@@ -51,6 +53,7 @@ const MapPage: React.FC = () => {
     setSpatialIndex(index);
   }, [layers]);
 
+  //Window resizing. Calculate navbar offset for canvas
   useEffect(() => {
     const handleResize = () => {
       if (navbarRef.current) {
@@ -67,6 +70,7 @@ const MapPage: React.FC = () => {
     };
   }, []);
 
+  //Uploading of files, parsing as json and adding to layer array with fields for data, name and aesthetics options
   const handleFileUpload = (file: File) => {
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -90,6 +94,7 @@ const MapPage: React.FC = () => {
     reader.readAsText(file);
   };
 
+  //Handling changes to aesthetic options
   const handleLayerSettingChange = (index: number, key: string, value: any) => {
     setLayers(prevLayers => {
       const newLayers = [...prevLayers];
@@ -98,6 +103,7 @@ const MapPage: React.FC = () => {
     });
   };
 
+  //On delete, remove from layer array
   const handleLayerRemove = (index: number) => {
     setLayers(prevLayers => prevLayers.filter((_, i) => i !== index));
   };
