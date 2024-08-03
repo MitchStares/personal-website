@@ -1,20 +1,23 @@
-// src/components/FeatureCounter.tsx
+// FeatureCounter.tsx
 import React from 'react';
 
-interface FeatureCounterProps {
-  featureCounts: number[];
+interface LayerCount {
+  name: string;
+  count: number;
 }
 
-const FeatureCounter: React.FC<FeatureCounterProps> = ({ featureCounts }) => {
-  return (
-    <div className="absolute bottom-4 right-4">
-      {featureCounts.map((count, index) => (
-        <div key={index}>
-          Layer {index + 1}: {count} features visible
-        </div>
-      ))}
-    </div>
-  );
-};
+interface FeatureCounterProps {
+  layerCounts: LayerCount[];
+}
+
+const FeatureCounter: React.FC<FeatureCounterProps> = ({ layerCounts }) => (
+  <div className="absolute bottom-4 right-4 bg-white p-2 rounded shadow">
+    {layerCounts.map((layerCount, index) => (
+      <div key={index}>
+        {layerCount.name}: {layerCount.count}
+      </div>
+    ))}
+  </div>
+);
 
 export default FeatureCounter;
