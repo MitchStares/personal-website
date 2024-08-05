@@ -4,7 +4,7 @@ import Sidebar from '../components/Sidebar';
 import MapView from '../components/MapView';
 import RBush from 'rbush';
 import * as turf from '@turf/turf';
-import { calculateAverageArea } from '../utils/calculateAverageArea';
+// import { calculateAverageArea } from '../utils/calculateAverageArea';
 import {LayerCount, RBushItem} from "../types";
 import PopoutInsights from '../components/PopoutInsights';
 
@@ -160,7 +160,7 @@ const MapPage: React.FC = () => {
     
     // Update insights
     setInsights([
-      { title: 'Visible Features', value: totalVisibleFeatures },
+      { title: 'Total Visible Features', value: totalVisibleFeatures },
       // { title: 'Average Area', value: 0 }, // You can update this when you implement calculateAverageArea
     ]);
   };

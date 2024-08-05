@@ -1,14 +1,14 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import DeckGL from '@deck.gl/react';
-import StaticMap from 'react-map-gl';
-import { GeoJsonLayer, WebMercatorViewport } from 'deck.gl';
-import { ViewStateChangeParameters } from '@deck.gl/core';
-import * as turf from '@turf/turf'; //Spatial Calcs
-import RBush from 'rbush'; // Quick Feature Culling
-import debounce from 'lodash/debounce'; // Mouse Abuse delay
-import FeatureCounter from './FeatureCounter';
-import BaseLayerSelector from './BaseLayerSelector';
-import {RBushItem, LayerCount} from "../types";
+import React, { useCallback, useMemo} from "react";
+import DeckGL from "@deck.gl/react";
+import StaticMap from "react-map-gl";
+import { GeoJsonLayer, WebMercatorViewport } from "deck.gl";
+import { ViewStateChangeParameters } from "@deck.gl/core";
+import * as turf from "@turf/turf"; //Spatial Calcs
+import RBush from "rbush"; // Quick Feature Culling
+import debounce from "lodash/debounce"; // Mouse Abuse delay
+// import FeatureCounter from "./FeatureCounter";
+import BaseLayerSelector from "./BaseLayerSelector";
+import { RBushItem, LayerCount } from "../types";
 
 //Props coming from MapPage
 interface MapViewProps {
@@ -32,59 +32,66 @@ const MapView: React.FC<MapViewProps> = ({
   onViewStateChange,
   onStyleChange,
   sidebarOpen,
-  onLayerCountsUpdate
+  onLayerCountsUpdate,
 }) => {
-
   // const [visibleFeatureCount, setVisibleFeatureCount] = React.useState(0);
 
-  const countVisibleFeatures = useCallback((viewportBounds: [number, number, number, number]): LayerCount[] => {
-    if (!spatialIndex) return [];
+  const countVisibleFeatures = useCallback(
+    (viewportBounds: [number, number, number, number]): LayerCount[] => {
+      if (!spatialIndex) return [];
 
-    const viewportFeatures = spatialIndex.search({
-      minX: viewportBounds[0],
-      minY: viewportBounds[1],
-      maxX: viewportBounds[2],
-      maxY: viewportBounds[3]
-    });
+      const viewportFeatures = spatialIndex.search({
+        minX: viewportBounds[0],
+        minY: viewportBounds[1],
+        maxX: viewportBounds[2],
+        maxY: viewportBounds[3],
+      });
 
-    const viewportBbox = turf.bboxPolygon(viewportBounds); 
+      const viewportBbox = turf.bboxPolygon(viewportBounds);
 
-    //filtering spatialIndex using intersect for polygon and cross or within for line. Point not needed as its a simple calculation
-    const counts = layers.map(layer => {
-      const layerFeatures = viewportFeatures.filter(item => item.feature.properties.layerId === layer.id);
-      const visibleCount = layerFeatures.filter(item => {
-        const feature = item.feature;
-        switch (feature.geometry.type) {
-          case 'Point':
-            return true;
-          case 'Polygon':
-          case 'MultiPolygon':
-            return turf.booleanIntersects(feature, viewportBbox);
-          case 'LineString':
-          case 'MultiLineString':
-            return turf.booleanCrosses(feature, viewportBbox) || turf.booleanWithin(feature, viewportBbox);
-          default:
-            return false;
-        }
-      }).length;
+      //filtering spatialIndex using intersect for polygon and cross or within for line. Point not needed as its a simple calculation
+      const counts = layers.map((layer) => {
+        const layerFeatures = viewportFeatures.filter(
+          (item) => item.feature.properties.layerId === layer.id
+        );
+        const visibleCount = layerFeatures.filter((item) => {
+          const feature = item.feature;
+          switch (feature.geometry.type) {
+            case "Point":
+              return true;
+            case "Polygon":
+            case "MultiPolygon":
+              return turf.booleanIntersects(feature, viewportBbox);
+            case "LineString":
+            case "MultiLineString":
+              return (
+                turf.booleanCrosses(feature, viewportBbox) ||
+                turf.booleanWithin(feature, viewportBbox)
+              );
+            default:
+              return false;
+          }
+        }).length;
 
-      return { id: layer.id, name: layer.name, count: visibleCount };
-    });
+        return { id: layer.id, name: layer.name, count: visibleCount };
+      });
 
-    return counts;
-  }, [spatialIndex, layers]);
-
+      return counts;
+    },
+    [spatialIndex, layers]
+  );
 
   // Our mouse abuse function. Waits until 200ms have passed since viewportBounds has been updated.
   const debouncedUpdateVisibleFeatures = useMemo(
-    () => debounce((bounds: [number, number, number, number]) => {
-      const counts = countVisibleFeatures(bounds);
-      onLayerCountsUpdate(counts);
-    }, 200),
+    () =>
+      debounce((bounds: [number, number, number, number]) => {
+        const counts = countVisibleFeatures(bounds);
+        onLayerCountsUpdate(counts);
+      }, 200),
     [countVisibleFeatures, onLayerCountsUpdate]
   );
 
-  //Just collecting viewState from viewport. No need for anythign else. 
+  //Just collecting viewState from viewport. No need for anythign else.
   const handleViewStateChange = (params: ViewStateChangeParameters<any>) => {
     const newViewport = params.viewState;
     onViewStateChange(newViewport);
@@ -92,33 +99,40 @@ const MapView: React.FC<MapViewProps> = ({
     //Convert viewport to webmercator
     const webMercatorViewport = new WebMercatorViewport(newViewport);
     const bounds = webMercatorViewport.getBounds();
-  
+
     //Handling different outputs from webmercatorviewport so debounce doesnt freak out
-    if (Array.isArray(bounds) && Array.isArray(bounds[0]) && Array.isArray(bounds[1])) {
+    if (
+      Array.isArray(bounds) &&
+      Array.isArray(bounds[0]) &&
+      Array.isArray(bounds[1])
+    ) {
       const [[minX, minY], [maxX, maxY]] = bounds;
       debouncedUpdateVisibleFeatures([minX, minY, maxX, maxY]);
     } else if (Array.isArray(bounds) && bounds.length === 4) {
-      debouncedUpdateVisibleFeatures(bounds as [number, number, number, number]);
+      debouncedUpdateVisibleFeatures(
+        bounds as [number, number, number, number]
+      );
     } else {
-      console.error('Unexpected bounds format:', bounds);
+      console.error("Unexpected bounds format:", bounds);
     }
   };
 
   //Iterating through the layers array using map() and rendering as geojsonlayers.
-  const renderedLayers = layers.map((layer) => (
-    new GeoJsonLayer({
-      id: layer.id,
-      data: layer.data,
-      visible: layer.visible,
-      filled: true,
-      opacity: layer.transparency,
-      getFillColor: layer.fillColor,
-      getLineColor: layer.lineColor,
-      lineWidthScale: layer.lineWidth,
-      pointRadiusMinPixels: 5,
-      getPointRadius: 100,
-    })
-  ));
+  const renderedLayers = layers.map(
+    (layer) =>
+      new GeoJsonLayer({
+        id: layer.id,
+        data: layer.data,
+        visible: layer.visible,
+        filled: true,
+        opacity: layer.transparency,
+        getFillColor: layer.fillColor,
+        getLineColor: layer.lineColor,
+        lineWidthScale: layer.lineWidth,
+        pointRadiusMinPixels: 5,
+        getPointRadius: 100,
+      })
+  );
 
   return (
     <>
@@ -131,7 +145,7 @@ const MapView: React.FC<MapViewProps> = ({
         <StaticMap
           mapboxAccessToken={mapboxAccessToken}
           mapStyle={mapStyle}
-          style={{ height: '100%' }}
+          style={{ height: "100%" }}
         />
       </DeckGL>
       <BaseLayerSelector
