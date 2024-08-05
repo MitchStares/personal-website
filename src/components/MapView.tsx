@@ -8,6 +8,7 @@ import RBush from 'rbush'; // Quick Feature Culling
 import debounce from 'lodash/debounce'; // Mouse Abuse delay
 import FeatureCounter from './FeatureCounter';
 import BaseLayerSelector from './BaseLayerSelector';
+import {RBushItem, LayerCount} from "../types";
 
 //Props coming from MapPage
 interface MapViewProps {
@@ -19,20 +20,7 @@ interface MapViewProps {
   onViewStateChange: (viewState: any) => void;
   onStyleChange: (style: string) => void;
   sidebarOpen: boolean;
-}
-
-//RBush or typescript gets cranky unless it has its own structure. Wont take an any
-interface RBushItem {
-  minX: number;
-  minY: number;
-  maxX: number;
-  maxY: number;
-  feature: any;
-}
-
-interface LayerCount {
-  name: string;
-  count: number;
+  onLayerCountsUpdate: (counts: LayerCount[]) => void;
 }
 
 const MapView: React.FC<MapViewProps> = ({
@@ -43,10 +31,10 @@ const MapView: React.FC<MapViewProps> = ({
   spatialIndex,
   onViewStateChange,
   onStyleChange,
-  sidebarOpen
+  sidebarOpen,
+  onLayerCountsUpdate
 }) => {
 
-  const [layerCounts, setLayerCounts] = useState<LayerCount[]>([]);
   // const [visibleFeatureCount, setVisibleFeatureCount] = React.useState(0);
 
   const countVisibleFeatures = useCallback((viewportBounds: [number, number, number, number]): LayerCount[] => {
@@ -80,7 +68,7 @@ const MapView: React.FC<MapViewProps> = ({
         }
       }).length;
 
-      return { name: layer.name, count: visibleCount };
+      return { id: layer.id, name: layer.name, count: visibleCount };
     });
 
     return counts;
@@ -91,9 +79,9 @@ const MapView: React.FC<MapViewProps> = ({
   const debouncedUpdateVisibleFeatures = useMemo(
     () => debounce((bounds: [number, number, number, number]) => {
       const counts = countVisibleFeatures(bounds);
-      setLayerCounts(counts);
+      onLayerCountsUpdate(counts);
     }, 200),
-    [countVisibleFeatures]
+    [countVisibleFeatures, onLayerCountsUpdate]
   );
 
   //Just collecting viewState from viewport. No need for anythign else. 
@@ -151,7 +139,7 @@ const MapView: React.FC<MapViewProps> = ({
         onStyleChange={onStyleChange}
         sidebarOpen={sidebarOpen}
       />
-      <FeatureCounter layerCounts={layerCounts} />
+      {/* <FeatureCounter layerCounts={layerCounts} /> */}
     </>
   );
 };

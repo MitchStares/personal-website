@@ -4,6 +4,10 @@ import Sidebar from '../components/Sidebar';
 import MapView from '../components/MapView';
 import RBush from 'rbush';
 import * as turf from '@turf/turf';
+import { calculateAverageArea } from '../utils/calculateAverageArea';
+import {LayerCount, RBushItem} from "../types";
+import PopoutInsights from '../components/PopoutInsights';
+
 
 const MAPBOX_ACCESS_TOKEN = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
 
@@ -15,15 +19,6 @@ const INITIAL_VIEW_STATE = {
   bearing: 0
 };
 
-//Rbush/Typescript likes to be precious. Needs it own structure
-interface RBushItem {
-  minX: number;
-  minY: number;
-  maxX: number;
-  maxY: number;
-  feature: any;
-}
-
 const MapPage: React.FC = () => {
   const [mapStyle, setMapStyle] = useState('mapbox://styles/mapbox/light-v9');
   const [mapHeight, setMapHeight] = useState('100vh');
@@ -32,6 +27,8 @@ const MapPage: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [viewport, setViewport] = useState(INITIAL_VIEW_STATE);
   const [spatialIndex, setSpatialIndex] = useState<RBush<RBushItem> | null>(null);
+  const [layerCounts, setLayerCounts] = useState<LayerCount[]>([]);
+  const [showPopoutInsights, setShowPopoutInsights] = useState(false);
 
   //Creating the spatial index for each feature using RBush for use in MapView
   useEffect(() => {
@@ -130,20 +127,63 @@ const MapPage: React.FC = () => {
   const handleLayerRemove = (index: number) => {
     setLayers(prevLayers => prevLayers.filter((_, i) => i !== index));
   };
+  const [insights, setInsights] = useState([
+    { title: 'Total Features', value: 0 },
+    { title: 'Average Area', value: 0 },
+  ]);
+
+  const [options, setOptions] = useState({
+    showLabels: true,
+    enableHeatmap: false,
+    // Add more options as needed
+  });
+
+  // useEffect(() => {
+    // Calculate insights based on layers data
+  //   const totalFeatures = layers.reduce((sum, layer) => sum + layer.data.features.length, 0);
+  //   const averageArea = calculateAverageArea(layers); // Implement this function
+
+  //   setInsights([
+  //     { title: 'Total Features', value: totalFeatures },
+  //     { title: 'Average Area', value: averageArea.toFixed(2) },
+  //   ]);
+  // }, [layers]);
+
+  const handleOptionChange = (option: string, value: any) => {
+    setOptions(prev => ({ ...prev, [option]: value }));
+  };
+
+  const handleLayerCountsUpdate = (counts: LayerCount[]) => {
+    setLayerCounts(counts);
+    // Calculate total visible features
+    const totalVisibleFeatures = counts.reduce((sum, layer) => sum + layer.count, 0);
+    
+    // Update insights
+    setInsights([
+      { title: 'Visible Features', value: totalVisibleFeatures },
+      // { title: 'Average Area', value: 0 }, // You can update this when you implement calculateAverageArea
+    ]);
+  };
 
   return (
     <div ref={navbarRef}>
       <div className="relative flex">
         <Sidebar
-          onFileUpload={handleFileUpload}
           onToggleSidebar={setSidebarOpen}
+          onFileUpload={handleFileUpload}
           layers={layers}
           onLayerSettingChange={handleLayerSettingChange}
           onRemoveLayer={handleLayerRemove}
+          onOptionChange={handleOptionChange}
+          options={options}
+          insights={insights}
+          layerCounts = {layerCounts}
+          onPopoutInsights={() => setShowPopoutInsights(true)}
         />
       </div>
       <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`} style={{ height: mapHeight }}>
         {MAPBOX_ACCESS_TOKEN ?(
+       <>
        <MapView
           initialViewState={INITIAL_VIEW_STATE}
           mapboxAccessToken={MAPBOX_ACCESS_TOKEN}
@@ -153,7 +193,17 @@ const MapPage: React.FC = () => {
           onViewStateChange={setViewport}
           onStyleChange={setMapStyle}
           sidebarOpen={sidebarOpen}
+          onLayerCountsUpdate={handleLayerCountsUpdate}
         />
+        {showPopoutInsights && (
+          <PopoutInsights
+            layerCounts={layerCounts.filter(layerCount => 
+              layers.find(layer => layer.id === layerCount.id && layer.visible)
+            )}
+            onClose={() => setShowPopoutInsights(false)}
+          />
+        )}
+       </>
         ) : (
           <div> Mapbox access token is missing. Please check environment variables. </div>
         )} 

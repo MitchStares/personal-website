@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { SketchPicker } from 'react-color';
+import { FaBars, FaChartBar, FaCog } from 'react-icons/fa';
+import { LayerCount } from '../types';
 
 interface SidebarProps {
   onFileUpload: (file: File) => void;
   onToggleSidebar: (isOpen: boolean) => void;
   layers: any[];
   onLayerSettingChange: (index: number, key: string, value: any) => void;
-  onRemoveLayer: (index: number) => void; // Added prop for removing layers
+  onRemoveLayer: (index: number) => void;
+  onOptionChange: (option: string, value: any) => void;
+  options: { [key: string]: any };
+  insights: Array<{ title: string, value: string | number }>;
+  layerCounts: LayerCount[];
+  onPopoutInsights: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -14,17 +21,30 @@ const Sidebar: React.FC<SidebarProps> = ({
   onToggleSidebar,
   layers,
   onLayerSettingChange,
-  onRemoveLayer, // Added prop for removing layers
+  onRemoveLayer,
+  onOptionChange,
+  options,
+  insights,
+  layerCounts,
+  onPopoutInsights
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string | null>(null);
   const [expandedLayers, setExpandedLayers] = useState<boolean[]>(Array(layers.length).fill(false));
 
   useEffect(() => {
-    onToggleSidebar(isOpen);
-  }, [isOpen, onToggleSidebar]);
+    onToggleSidebar(activeSection !== null);
+  }, [activeSection, onToggleSidebar]);
 
-  const toggleSidebar = () => {
-    setIsOpen(!isOpen);
+  const toggleSection = (section: string) => {
+    setActiveSection(activeSection === section ? null : section);
+  };
+
+  const toggleLayer = (index: number) => {
+    setExpandedLayers(prev => {
+      const newExpanded = [...prev];
+      newExpanded[index] = !newExpanded[index];
+      return newExpanded;
+    });
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,40 +54,34 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
-  const toggleLayer = (index: number) => {
-    setExpandedLayers(prevExpandedLayers => {
-      const newExpandedLayers = [...prevExpandedLayers];
-      newExpandedLayers[index] = !newExpandedLayers[index];
-      return newExpandedLayers;
-    });
-  };
-
   useEffect(() => {
-    // Ensure the expandedLayers array has the correct length
     setExpandedLayers(Array(layers.length).fill(false));
   }, [layers.length]);
 
   return (
-    <div>
+    <div className="fixed top-0 left-0 h-full z-10 flex">
+      {/* Sidebar content */}
       <div
-        className={`fixed top-0 left-0 pt-4rem h-full w-64 bg-gray-800 text-white transition-transform duration-300 transform ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        } shadow-lg z-10 overflow-y-auto`}
+        className={`bg-gray-800 text-white h-full w-64 transition-transform duration-300 transform ${
+          activeSection !== null ? 'translate-x-0' : '-translate-x-full'
+        } shadow-lg overflow-y-auto`}
         style={{ paddingTop: '4rem' }}
       >
         <div className="p-4">
-          <h2 className="text-xl font-semibold mb-4">Upload GeoJSON</h2>
-          <label className="block mb-4">
-            <span className="sr-only">Choose file</span>
-            <input
-              type="file"
-              accept=".geojson, .json"
-              onChange={handleFileChange}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-700 file:text-white hover:file:bg-gray-600"
-            />
-          </label>
+          {activeSection === 'layers' && (
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Upload GeoJSON</h2>
+              <label className="block mb-4">
+                <span className="sr-only">Choose file</span>
+                <input
+                  type="file"
+                  accept=".geojson, .json"
+                  onChange={handleFileChange}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-700 file:text-white hover:file:bg-gray-600"
+                />
+              </label>
 
-          {layers.map((layer, index) => (
+              {layers.map((layer, index) => (
             <div key={layer.id} className="mb-4">
               <div className="flex justify-between items-center mb-2">
               <input
@@ -170,17 +184,82 @@ const Sidebar: React.FC<SidebarProps> = ({
               )}
             </div>
           ))}
+          </div>
+          )}
+
+{activeSection === 'insights' && (
+  <div className="bg-gray-100 p-4 rounded-lg shadow-inner">
+    <h2 className="text-xl font-semibold mb-4 text-gray-800">Insights</h2>
+    {insights.map((insight, index) => (
+      <div key={index} className="mb-2 bg-white p-3 rounded-md shadow">
+        <h3 className="font-semibold text-gray-700">{insight.title}</h3>
+        <p className="text-gray-600">{insight.value}</p>
+      </div>
+    ))}
+    <h3 className="text-lg font-semibold mt-4 mb-2 text-gray-800">Visible Features by Layer
+    <button
+      onClick={onPopoutInsights}
+      className="text-sm bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
+      >
+        Pop Out
+      </button>
+      </h3>
+    {layerCounts
+      .filter(layerCount => layers.find(layer => layer.id === layerCount.id && layer.visible))
+      .map((layerCount, index) => (
+        <div key={index} className="mb-1 flex justify-between bg-white p-2 rounded-md shadow">
+          <span className="text-gray-700">{layerCount.name}:</span>
+          <span className="font-semibold text-gray-800">{layerCount.count}</span>
+        </div>
+      ))}
+  </div>
+)}
+
+          {activeSection === 'options' && (
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Options</h2>
+              {Object.entries(options).map(([key, value]) => (
+                <div key={key} className="mb-2">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={value as boolean}
+                      onChange={(e) => onOptionChange(key, e.target.checked)}
+                      className="form-checkbox h-5 w-5 text-blue-600"
+                    />
+                    <span className="ml-2">{key}</span>
+                  </label>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
-      <button
-        className={`absolute p-4 text-white bg-gray-800 hover:bg-gray-700 top-4 rounded-e-md transition-transform duration-300 transform ${
-          isOpen ? 'translate-x-64' : 'translate-x-0'
-        } z-20`}
-        onClick={toggleSidebar}
-        style={{ left: isOpen ? '' : '0' }}
-      >
-        ☰
-      </button>
+
+      {/* Pullout tabs */}
+      <div className={`flex flex-col transition-transform duration-300 transform ${
+        activeSection !== null ? 'translate-x-0' : '-translate-x-64'
+      }`}>
+        <button
+          className={`p-4 text-white bg-gray-800 hover:bg-gray-700 rounded-r-md shadow-lg ${activeSection === 'layers' ? 'bg-gray-600' : ''}`}
+          onClick={() => toggleSection('layers')}
+          style={{ marginTop: '4rem' }}
+        >
+          <FaBars />
+        </button>
+        <button
+          className={`p-4 text-white bg-gray-800 hover:bg-gray-700 rounded-r-md shadow-lg ${activeSection === 'insights' ? 'bg-gray-600' : ''}`}
+          onClick={() => toggleSection('insights')}
+        >
+          <FaChartBar />
+        </button>
+        <button
+          className={`p-4 text-white bg-gray-800 hover:bg-gray-700 rounded-r-md shadow-lg ${activeSection === 'options' ? 'bg-gray-600' : ''}`}
+          onClick={() => toggleSection('options')}
+        >
+          <FaCog />
+        </button>
+      </div>
     </div>
   );
 };
