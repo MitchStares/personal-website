@@ -82,7 +82,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-700 file:text-white hover:file:bg-gray-600"
                 />
               </label>
-
+  
               {layers.map((layer, index) => (
                 <div key={layer.id} className="mb-4">
                   <div className="flex justify-between items-center mb-2">
@@ -117,21 +117,30 @@ const Sidebar: React.FC<SidebarProps> = ({
                   </div>
                   {expandedLayers[index] && (
                     <div>
-                      {/* Layer Visibility Toggle
-                  <div className="mb-4">
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={layer.visible}
-                        onChange={() =>
-                          onLayerSettingChange(index, 'visible', !layer.visible)
-                        }
-                        className="form-checkbox h-5 w-5 text-blue-600"
-                      />
-                      <span className="ml-2 text-sm">Show Layer</span>
-                    </label>
-                  </div> */}
-
+                      {/* Geometry Type Toggles */}
+                      {layer.geometryTypes && layer.geometryTypes.length > 0 && (
+                        <div className="mb-4">
+                          <label className="block text-sm mb-2">Visible Geometry Types</label>
+                          {layer.geometryTypes.map((type: string) => (
+                            <div key={type} className="flex items-center mb-2">
+                              <input
+                                type="checkbox"
+                                checked={layer.visibleGeometryTypes[type] !== false}
+                                onChange={() => {
+                                  const newVisibleTypes = {
+                                    ...layer.visibleGeometryTypes,
+                                    [type]: !layer.visibleGeometryTypes[type]
+                                  };
+                                  onLayerSettingChange(index, 'visibleGeometryTypes', newVisibleTypes);
+                                }}
+                                className="form-checkbox h-5 w-5 text-blue-600 mr-2"
+                              />
+                              <span className="text-sm">{type}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+  
                       {/* Transparency Slider */}
                       <div className="mb-4">
                         <label className="block text-sm mb-2">
@@ -153,7 +162,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                           className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                         />
                       </div>
-
+  
                       {/* Fill Color Input */}
                       <div className="mb-4">
                         <label className="block text-sm mb-2">Fill Color</label>
@@ -173,7 +182,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                           }}
                         />
                       </div>
-
+  
                       {/* Line Color Input */}
                       <div className="mb-4">
                         <label className="block text-sm mb-2">Line Color</label>
@@ -193,7 +202,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                           }}
                         />
                       </div>
-
+  
                       {/* Line Width Input */}
                       <div className="mb-4">
                         <label className="block text-sm mb-2">Line Width</label>
@@ -216,7 +225,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               ))}
             </div>
           )}
-
+  
           {activeSection === "insights" && (
             <div className="bg-gray-100 p-4 rounded-lg shadow-inner">
               <h2 className="text-xl font-semibold mb-4 text-gray-800">
@@ -261,7 +270,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 ))}
             </div>
           )}
-
+  
           {activeSection === "options" && (
             <div>
               <h2 className="text-xl font-semibold mb-4">Options</h2>
@@ -282,7 +291,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           )}
         </div>
       </div>
-
+  
       {/* Pullout tabs */}
       <div
         className={`flex flex-col transition-transform duration-300 transform ${
@@ -290,29 +299,47 @@ const Sidebar: React.FC<SidebarProps> = ({
         }`}
       >
         <button
-          className={`p-4 text-white bg-gray-800 hover:bg-gray-700 rounded-r-md shadow-lg ${
-            activeSection === "layers" ? "bg-gray-600" : ""
+          className={`p-4 text-white bg-gray-800 hover:bg-gray-700 rounded-r-md shadow-lg transition-all duration-300 ${
+            activeSection === "layers"
+              ? "bg-blue-600 hover:bg-blue-700 translate-x-0 scale-y-110 z-10"
+              : ""
           }`}
           onClick={() => toggleSection("layers")}
           style={{ marginTop: "4rem" }}
         >
-          <FaBars />
+          <FaBars
+            className={`transform transition-transform duration-300 ${
+              activeSection === "layers" ? "scale-110" : ""
+            }`}
+          />
         </button>
         <button
-          className={`p-4 text-white bg-gray-800 hover:bg-gray-700 rounded-r-md shadow-lg ${
-            activeSection === "insights" ? "bg-gray-600" : ""
+          className={`p-4 text-white bg-gray-800 hover:bg-gray-700 rounded-r-md shadow-lg transition-all duration-300 ${
+            activeSection === "insights"
+              ? "bg-blue-600 hover:bg-blue-700 translate-x-0 scale-y-110 z-10"
+              : ""
           }`}
           onClick={() => toggleSection("insights")}
         >
-          <FaChartBar />
+          <FaChartBar
+            className={`transform transition-transform duration-300 ${
+              activeSection === "insights" ? "scale-110" : ""
+            }`}
+          />
         </button>
         <button
-          className={`p-4 text-white bg-gray-800 hover:bg-gray-700 rounded-r-md shadow-lg ${
-            activeSection === "options" ? "bg-gray-600" : ""
+          className={`p-4 text-white bg-gray-800 hover:bg-gray-700 rounded-r-md shadow-lg transition-all duration-300 ${
+            activeSection === "options"
+              ? "bg-blue-600 hover:bg-blue-700 translate-x-0 scale-y-110 z-10"
+              : ""
           }`}
           onClick={() => toggleSection("options")}
         >
-          <FaCog />
+          <FaCog
+            className={`transform transition-transform duration-300 ${
+              activeSection === "options" ? "scale-110" : ""
+            }`}
+          />
         </button>
       </div>
     </div>

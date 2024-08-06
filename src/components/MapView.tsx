@@ -118,21 +118,34 @@ const MapView: React.FC<MapViewProps> = ({
   };
 
   //Iterating through the layers array using map() and rendering as geojsonlayers.
-  const renderedLayers = layers.map(
-    (layer) =>
-      new GeoJsonLayer({
-        id: layer.id,
-        data: layer.data,
-        visible: layer.visible,
-        filled: true,
-        opacity: layer.transparency,
-        getFillColor: layer.fillColor,
-        getLineColor: layer.lineColor,
-        lineWidthScale: layer.lineWidth,
-        pointRadiusMinPixels: 5,
-        getPointRadius: 100,
-      })
-  );
+  const renderedLayers = layers.map((layer) => {
+    const filteredFeatures = layer.data.features.filter((feature: any) => 
+      layer.visibleGeometryTypes[feature.geometry.type] !== false
+    );
+  
+    return new GeoJsonLayer({
+      id: layer.id,
+      data: {
+        ...layer.data,
+        features: filteredFeatures
+      },
+      visible: layer.visible,
+      filled: true,
+      opacity: layer.transparency,
+      getFillColor: layer.fillColor,
+      stroked: true,
+      getLineColor: layer.lineColor,
+      lineWidthScale: layer.lineWidth,
+      pointRadiusMinPixels: 5,
+      getPointRadius: 100,
+      pickable: true,
+      // Add these for better line rendering
+      lineWidthMinPixels: 1,
+      lineJointRounded: true,
+      lineMiterLimit: 2,
+    });
+  });
+
 
   return (
     <>

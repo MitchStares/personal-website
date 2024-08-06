@@ -75,7 +75,11 @@ const MapPage: React.FC = () => {
         const json = JSON.parse(event.target.result as string);
         const layerId = `geojson-layer-${layers.length}`;
         const layerName = `Layer ${layers.length + 1}`;
-
+  
+        // Determining which geometry types are present in the layer
+        const geometryTypes = new Set(json.features.map((feature: any) => feature.geometry.type));
+        console.log("Detected geometry types:", Array.from(geometryTypes)); // Add this line for debugging
+  
         json.features = json.features.map((feature: any) => ({
           ...feature,
           properties: {
@@ -83,7 +87,7 @@ const MapPage: React.FC = () => {
             layerId: layerId
           }
         }));
-
+  
         setLayers(prevLayers => [
           ...prevLayers,
           {
@@ -94,7 +98,11 @@ const MapPage: React.FC = () => {
             transparency: 0.7,
             fillColor: [255, 140, 0],
             lineColor: [255, 255, 255],
-            lineWidth: 1
+            lineWidth: 2,
+            geometryTypes: Array.from(geometryTypes),
+            visibleGeometryTypes: Object.fromEntries(
+              Array.from(geometryTypes).map(type => [type, true])
+            )
           }
         ]);
       }
@@ -106,8 +114,19 @@ const MapPage: React.FC = () => {
   const handleLayerSettingChange = (index: number, key: string, value: any) => {
     setLayers(prevLayers => {
       const newLayers = [...prevLayers];
-      newLayers[index] = { ...newLayers[index], [key]: value };
-
+      if (key === 'visibleGeometryTypes') {
+        // For visibleGeometryTypes, we want to update the specific type
+        newLayers[index] = {
+          ...newLayers[index],
+          visibleGeometryTypes: {
+            ...newLayers[index].visibleGeometryTypes,
+            ...value
+          }
+        };
+      } else {
+        newLayers[index] = { ...newLayers[index], [key]: value };
+      }
+  
       if (key === 'name') {
         const layerId = newLayers[index].id;
         newLayers[index].data.features = newLayers[index].data.features.map((feature: any) => ({
@@ -118,10 +137,11 @@ const MapPage: React.FC = () => {
           }
         }));
       }
-
+  
       return newLayers;
     });
   };
+
 
   //On delete, remove from layer array
   const handleLayerRemove = (index: number) => {
