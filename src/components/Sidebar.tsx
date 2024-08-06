@@ -118,7 +118,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   {expandedLayers[index] && (
                     <div>
                       {/* Geometry Type Toggles */}
-                      {layer.geometryTypes && layer.geometryTypes.length > 0 && (
+                      {layer.geometryTypes && layer.geometryTypes.length > 1 && (
                         <div className="mb-4">
                           <label className="block text-sm mb-2">Visible Geometry Types</label>
                           {layer.geometryTypes.map((type: string) => (
@@ -273,7 +273,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   
           {activeSection === "options" && (
             <div>
-              <h2 className="text-xl font-semibold mb-4">Options</h2>
+              <h2 className="text-xl font-semibold mb-4">Options (WIP)</h2>
               {Object.entries(options).map(([key, value]) => (
                 <div key={key} className="mb-2">
                   <label className="flex items-center">
