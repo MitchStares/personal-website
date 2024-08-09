@@ -186,8 +186,10 @@ const MapPage: React.FC = () => {
   };
 
   return (
-    <div ref={navbarRef}>
-      <div className="relative flex">
+    <div className="pt-[88px]">
+      <div ref={navbarRef} className="fixed top-0 left-0 right-0 z-50">
+      </div>
+      <div className="relative flex" style={{ height: mapHeight }}>
         <Sidebar
           onToggleSidebar={setSidebarOpen}
           onFileUpload={handleFileUpload}
