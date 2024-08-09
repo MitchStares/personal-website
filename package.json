@@ -1,7 +1,7 @@
 {
   "name": "personal-website",
   "version": "0.1.0",
-  "homepage": "https://mitchstares.github.io/personal-website",
+  "homepage": "https://mitchstares.github.io",
   "private": true,
   "dependencies": {
     "@tailwindcss/typography": "^0.5.13",
@@ -41,7 +41,7 @@
   },
   "scripts": {
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build",
+    "deploy": "gh-pages -d build -r https://github.com/MitchStares/MitchStares.github.io -b main",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
