@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import Sidebar from '../components/Sidebar';
 import MapView from '../components/MapView';
@@ -19,11 +19,10 @@ const INITIAL_VIEW_STATE = {
   bearing: 0
 };
 
+
 const MapPage: React.FC = () => {
   const [mapStyle, setMapStyle] = useState('mapbox://styles/mapbox/light-v9');
-  const [mapHeight, setMapHeight] = useState('100vh');
   const [layers, setLayers] = useState<any[]>([]);
-  const navbarRef = useRef<HTMLDivElement>(null); //Needed for map canvas height calculation to avoid navbar
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [viewport, setViewport] = useState(INITIAL_VIEW_STATE);
   const [spatialIndex, setSpatialIndex] = useState<RBush<RBushItem> | null>(null);
@@ -49,23 +48,6 @@ const MapPage: React.FC = () => {
     });
     setSpatialIndex(index);
   }, [layers]);
-
-  //Window resizing. Calculate navbar offset for canvas
-  useEffect(() => {
-    const handleResize = () => {
-      if (navbarRef.current) {
-        const navbarHeight = navbarRef.current.offsetHeight;
-        setMapHeight(`calc(100vh - ${navbarHeight}px)`);
-      }
-    };
-
-    handleResize();
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
 
   //Uploading of files, parsing as json and adding to layer array with fields for data, name and aesthetics options
   const handleFileUpload = (file: File) => {
@@ -185,9 +167,8 @@ const MapPage: React.FC = () => {
     ]);
   };
 
-  return (
-    <div ref={navbarRef}>
-      <div className="relative flex" style={{ height: mapHeight }}>
+    return (
+      <div className={`flex h-screen'}`}>
         <Sidebar
           onToggleSidebar={setSidebarOpen}
           onFileUpload={handleFileUpload}
@@ -197,39 +178,38 @@ const MapPage: React.FC = () => {
           onOptionChange={handleOptionChange}
           options={options}
           insights={insights}
-          layerCounts = {layerCounts}
+          layerCounts={layerCounts}
           onPopoutInsights={() => setShowPopoutInsights(true)}
         />
+        <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
+          {MAPBOX_ACCESS_TOKEN ? (
+            <>
+              <MapView
+                initialViewState={INITIAL_VIEW_STATE}
+                mapboxAccessToken={MAPBOX_ACCESS_TOKEN}
+                mapStyle={mapStyle}
+                layers={layers}
+                spatialIndex={spatialIndex}
+                onViewStateChange={setViewport}
+                onStyleChange={setMapStyle}
+                sidebarOpen={sidebarOpen}
+                onLayerCountsUpdate={handleLayerCountsUpdate}
+              />
+              {showPopoutInsights && (
+                <PopoutInsights
+                  layerCounts={layerCounts.filter(layerCount => 
+                    layers.find(layer => layer.id === layerCount.id && layer.visible)
+                  )}
+                  onClose={() => setShowPopoutInsights(false)}
+                />
+              )}
+            </>
+          ) : (
+            <div>Mapbox access token is missing. Please check environment variables.</div>
+          )}
+        </div>
       </div>
-      <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`} style={{ height: mapHeight }}>
-        {MAPBOX_ACCESS_TOKEN ?(
-       <>
-       <MapView
-          initialViewState={INITIAL_VIEW_STATE}
-          mapboxAccessToken={MAPBOX_ACCESS_TOKEN}
-          mapStyle={mapStyle}
-          layers={layers}
-          spatialIndex={spatialIndex}
-          onViewStateChange={setViewport}
-          onStyleChange={setMapStyle}
-          sidebarOpen={sidebarOpen}
-          onLayerCountsUpdate={handleLayerCountsUpdate}
-        />
-        {showPopoutInsights && (
-          <PopoutInsights
-            layerCounts={layerCounts.filter(layerCount => 
-              layers.find(layer => layer.id === layerCount.id && layer.visible)
-            )}
-            onClose={() => setShowPopoutInsights(false)}
-          />
-        )}
-       </>
-        ) : (
-          <div> Mapbox access token is missing. Please check environment variables. </div>
-        )} 
-      </div>
-    </div>
-  );
-};
+    );
+  };
 
 export default MapPage;

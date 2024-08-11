@@ -40,19 +40,24 @@ const Navbar: React.FC = () => {
 };
 
 // Layout wrapper component
+
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const location = useLocation();
+  const isMapPage = location.pathname === '/map';
+
   return (
-    <div className="min-h-screen flex flex-col pt-20">
-      <Navbar />
+    <div className={`min-h-screen flex flex-col ${!isMapPage ? 'pt-20' : ''}`}>
+      {!isMapPage && <Navbar />}
       <main className="flex-grow">
         {children}
       </main>
     </div>
   );
 };
+
 
 export { Navbar, Layout };
