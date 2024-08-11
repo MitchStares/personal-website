@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { SketchPicker } from "react-color";
-import { FaBars, FaChartBar, FaCog } from "react-icons/fa";
+import { FaBars, FaChartBar, FaChevronLeft, FaCog } from "react-icons/fa";
 import { LayerCount } from "../types";
+import { Link } from "react-router-dom";
 
 interface SidebarProps {
   onFileUpload: (file: File) => void;
@@ -64,15 +65,24 @@ const Sidebar: React.FC<SidebarProps> = ({
     <div className="fixed top-0 left-0 h-full z-10 flex">
       {/* Sidebar content */}
       <div
-        className={`bg-gray-800 text-white h-full w-64 transition-transform duration-300 transform ${
-          activeSection !== null ? "translate-x-0" : "-translate-x-full"
-        } shadow-lg overflow-y-auto`}
-        style={{ paddingTop: "4rem" }}
-      >
+      className={`bg-[#f8f5f1] text-green-800 h-full w-64 transition-transform duration-300 transform ${
+        activeSection !== null ? "translate-x-0" : "-translate-x-full"
+      } shadow-lg overflow-y-auto`}
+    >
+      <div className="p-4 border-b border-green-800">
+        <Link
+          to="/"
+          className="flex items-center text-green-800 hover:text-green-700 transition-colors duration-300"
+        >
+          <FaChevronLeft size={16} className="mr-2" />
+          <span className="font-semibold">Back to Home</span>
+        </Link>
+      </div>
+      <div style={{ paddingTop: "1rem" }}>
         <div className="p-4">
           {activeSection === "layers" && (
             <div>
-              <h2 className="text-xl font-semibold mb-4">Upload GeoJSON</h2>
+              <h2 className="text-xl font-semibold mb-4 text-green-800">Upload GeoJSON</h2>
               <label className="block mb-4">
                 <span className="sr-only">Choose file</span>
                 <input
@@ -291,6 +301,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           )}
         </div>
       </div>
+      </div>
   
       {/* Pullout tabs */}
       <div
@@ -299,9 +310,9 @@ const Sidebar: React.FC<SidebarProps> = ({
         }`}
       >
         <button
-          className={`p-4 text-white bg-gray-800 hover:bg-gray-700 rounded-r-md shadow-lg transition-all duration-300 ${
+          className={`p-4 text-gray-800 bg-[#f8f5f1] hover:bg-green-700 rounded-r-md shadow-lg transition-all duration-300 ${
             activeSection === "layers"
-              ? "bg-blue-600 hover:bg-blue-700 translate-x-0 scale-y-110 z-10"
+              ? "bg-green-700 hover:bg-green-800 translate-x-0 scale-y-110 z-10"
               : ""
           }`}
           onClick={() => toggleSection("layers")}
@@ -314,9 +325,9 @@ const Sidebar: React.FC<SidebarProps> = ({
           />
         </button>
         <button
-          className={`p-4 text-white bg-gray-800 hover:bg-gray-700 rounded-r-md shadow-lg transition-all duration-300 ${
+          className={`p-4 text-gray-800 bg-[#f8f5f1] hover:bg-green-700 rounded-r-md shadow-lg transition-all duration-300 ${
             activeSection === "insights"
-              ? "bg-blue-600 hover:bg-blue-700 translate-x-0 scale-y-110 z-10"
+              ? "bg-green-700 hover:bg-green-800 translate-x-0 scale-y-110 z-10"
               : ""
           }`}
           onClick={() => toggleSection("insights")}
@@ -328,9 +339,9 @@ const Sidebar: React.FC<SidebarProps> = ({
           />
         </button>
         <button
-          className={`p-4 text-white bg-gray-800 hover:bg-gray-700 rounded-r-md shadow-lg transition-all duration-300 ${
+          className={`p-4 text-gray-800 bg-[#f8f5f1] hover:bg-green-700 rounded-r-md shadow-lg transition-all duration-300 ${
             activeSection === "options"
-              ? "bg-blue-600 hover:bg-blue-700 translate-x-0 scale-y-110 z-10"
+              ? "bg-green-700 hover:bg-green-800 translate-x-0 scale-y-110 z-10"
               : ""
           }`}
           onClick={() => toggleSection("options")}
