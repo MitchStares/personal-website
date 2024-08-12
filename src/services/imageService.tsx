@@ -9,3 +9,13 @@ export const uploadImage = async (file: File): Promise<string> => {
   const url = await getDownloadURL(storageRef);
   return url;
 };
+export const getImageUrl = async (path: string): Promise<string> => {
+  const storageRef = ref(storage, path);
+  try {
+    const url = await getDownloadURL(storageRef);
+    return url;
+  } catch (error) {
+    console.error("Error fetching image URL:", error);
+    throw error;
+  }
+};
