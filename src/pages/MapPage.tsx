@@ -7,7 +7,10 @@ import * as turf from '@turf/turf';
 // import { calculateAverageArea } from '../utils/calculateAverageArea';
 import {LayerCount, RBushItem} from "../types";
 import PopoutInsights from '../components/PopoutInsights';
-
+import { convertToGeoJSON } from '../utils/dataConversion';
+import { toast } from 'react-toastify';
+import { TailSpin } from 'react-loader-spinner';
+import { CustomFeatureCollection } from '../types/geojson';
 
 const MAPBOX_ACCESS_TOKEN = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
 
@@ -28,6 +31,7 @@ const MapPage: React.FC = () => {
   const [spatialIndex, setSpatialIndex] = useState<RBush<RBushItem> | null>(null);
   const [layerCounts, setLayerCounts] = useState<LayerCount[]>([]);
   const [showPopoutInsights, setShowPopoutInsights] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   //Creating the spatial index for each feature using RBush for use in MapView
   useEffect(() => {
@@ -50,46 +54,48 @@ const MapPage: React.FC = () => {
   }, [layers]);
 
   //Uploading of files, parsing as json and adding to layer array with fields for data, name and aesthetics options
-  const handleFileUpload = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        const json = JSON.parse(event.target.result as string);
-        const layerId = `geojson-layer-${layers.length}`;
-        const layerName = `Layer ${layers.length + 1}`;
-  
-        // Determining which geometry types are present in the layer
-        const geometryTypes = new Set(json.features.map((feature: any) => feature.geometry.type));
-        console.log("Detected geometry types:", Array.from(geometryTypes)); // Add this line for debugging
-  
-        json.features = json.features.map((feature: any) => ({
-          ...feature,
-          properties: {
-            ...feature.properties,
-            layerId: layerId
-          }
-        }));
-  
-        setLayers(prevLayers => [
-          ...prevLayers,
-          {
-            id: layerId,
-            name: layerName,
-            data: json,
-            visible: true,
-            transparency: 0.7,
-            fillColor: [255, 140, 0],
-            lineColor: [255, 255, 255],
-            lineWidth: 2,
-            geometryTypes: Array.from(geometryTypes),
-            visibleGeometryTypes: Object.fromEntries(
-              Array.from(geometryTypes).map(type => [type, true])
-            )
-          }
-        ]);
-      }
-    };
-    reader.readAsText(file);
+  const handleFileUpload = async (file: File) => {
+    setIsLoading(true);
+    try {
+      const geoJSON: CustomFeatureCollection = await convertToGeoJSON(file);
+      const layerId = `geojson-layer-${layers.length}`;
+      const layerName = file.name.split('.')[0];
+
+      const geometryTypes = new Set(geoJSON.features.map((feature) => feature.geometry.type));
+
+      geoJSON.features = geoJSON.features.map((feature) => ({
+        ...feature,
+        properties: {
+          ...feature.properties,
+          layerId: layerId
+        }
+      }));
+
+      setLayers(prevLayers => [
+        ...prevLayers,
+        {
+          id: layerId,
+          name: layerName,
+          data: geoJSON,
+          visible: true,
+          transparency: 0.7,
+          fillColor: [255, 140, 0],
+          lineColor: [255, 255, 255],
+          lineWidth: 2,
+          geometryTypes: Array.from(geometryTypes),
+          visibleGeometryTypes: Object.fromEntries(
+            Array.from(geometryTypes).map(type => [type, true])
+          )
+        }
+      ]);
+
+      toast.success(`Successfully loaded ${file.name}`);
+    } catch (error: unknown) {
+      console.error('Error uploading file:', error);
+      toast.error(`Failed to load ${file.name}: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   //Handling changes to aesthetic options
@@ -208,7 +214,13 @@ const MapPage: React.FC = () => {
             <div>Mapbox access token is missing. Please check environment variables.</div>
           )}
         </div>
-      </div>
+        {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <TailSpin color="#00BFFF" height={80} width={80} />
+        </div>
+
+      )}
+    </div>
     );
   };
 

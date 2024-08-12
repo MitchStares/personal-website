@@ -82,16 +82,19 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="p-4">
           {activeSection === "layers" && (
             <div>
-              <h2 className="text-xl font-semibold mb-4 text-green-800">Upload GeoJSON</h2>
-              <label className="block mb-4">
-                <span className="sr-only">Choose file</span>
-                <input
-                  type="file"
-                  accept=".geojson, .json"
-                  onChange={handleFileChange}
-                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-700 file:text-white hover:file:bg-gray-600"
-                />
-              </label>
+            <h2 className="text-xl font-semibold mb-4 text-green-800">Upload Data</h2>
+            <label className="block mb-4">
+              <span className="sr-only">Choose file</span>
+              <input
+                type="file"
+                accept=".geojson, .json, .csv, .zip"
+                onChange={handleFileChange}
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-700 file:text-white hover:file:bg-gray-600"
+              />
+            </label>
+            <p className="text-sm text-gray-600 mb-4">
+              Supported formats: GeoJSON, CSV, Zipped Shapefile
+            </p>
   
               {layers.map((layer, index) => (
                 <div key={layer.id} className="mb-4">
