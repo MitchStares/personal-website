@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchBlogs } from "../services/blogService";
+import { getImageUrl } from "../services/imageService";
 
 const Home: React.FC = () => {
   const [recentBlogs, setRecentBlogs] = useState<any[]>([]);
+  const [mapImageUrl, setMapImageUrl] = useState<string>("");
 
   useEffect(() => {
     const getRecentBlogs = async () => {
@@ -11,7 +13,17 @@ const Home: React.FC = () => {
       setRecentBlogs(blogs.slice(0, 3));
     };
     getRecentBlogs();
-  }, []);
+  const fetchMapImage = async () => {
+    try {
+      const url = await getImageUrl('gs://personal-website-b97cc.appspot.com/images/mapapp.png'); // Replace with actual path
+      setMapImageUrl(url);
+    } catch (error) {
+      console.error("Error fetching map image:", error);
+      // You might want to set a default image URL here in case of an error
+    }
+  };
+  fetchMapImage();
+}, []);
 
   return (
     <div className="bg-[#f8f5f1] min-h-screen text-gray-800">
@@ -25,6 +37,33 @@ const Home: React.FC = () => {
               Just a data engineer blogging and developing apps. Thanks for
               popping by!
             </p>
+          </section>
+
+          {/* New Map Feature Section */}
+          <section className="mb-16 bg-white rounded-lg overflow-hidden shadow-lg">
+            <div className="md:flex">
+              <div className="md:w-1/2">
+                <img
+                  src={mapImageUrl} // Replace with your actual map image
+                  alt="Map Application Preview"
+                  className="w-full h-64 md:h-full object-cover"
+                />
+              </div>
+              <div className="p-8 md:w-1/2 flex flex-col justify-center">
+                <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-green-800">
+                  Explore My Current Project
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  Dive into my latest project. This interactive map application aims to provide an easy, responsive platform to conduct spatial insights.
+                </p>
+                <Link
+                  to="/map"
+                  className="inline-block bg-green-800 text-white font-bold py-3 px-6 rounded-full hover:bg-green-700 transition duration-300 text-center"
+                >
+                  Launch Spatial Insights
+                </Link>
+              </div>
+            </div>
           </section>
 
           <section>
