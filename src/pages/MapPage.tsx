@@ -57,11 +57,15 @@ const MapPage: React.FC = () => {
   const handleFileUpload = async (file: File) => {
     setIsLoading(true);
     try {
+      console.log('Starting file upload:', file.name);
       const geoJSON: CustomFeatureCollection = await convertToGeoJSON(file);
+      console.log('Received GeoJSON:', geoJSON);
+
       const layerId = `geojson-layer-${layers.length}`;
       const layerName = file.name.split('.')[0];
 
       const geometryTypes = new Set(geoJSON.features.map((feature) => feature.geometry.type));
+      console.log('Detected geometry types:', Array.from(geometryTypes));
 
       geoJSON.features = geoJSON.features.map((feature) => ({
         ...feature,
@@ -71,23 +75,28 @@ const MapPage: React.FC = () => {
         }
       }));
 
-      setLayers(prevLayers => [
-        ...prevLayers,
-        {
-          id: layerId,
-          name: layerName,
-          data: geoJSON,
-          visible: true,
-          transparency: 0.7,
-          fillColor: [255, 140, 0],
-          lineColor: [255, 255, 255],
-          lineWidth: 2,
-          geometryTypes: Array.from(geometryTypes),
-          visibleGeometryTypes: Object.fromEntries(
-            Array.from(geometryTypes).map(type => [type, true])
-          )
-        }
-      ]);
+      const newLayer = {
+        id: layerId,
+        name: layerName,
+        data: geoJSON,
+        visible: true,
+        transparency: 0.7,
+        fillColor: [255, 140, 0],
+        lineColor: [255, 255, 255],
+        lineWidth: 2,
+        geometryTypes: Array.from(geometryTypes),
+        visibleGeometryTypes: Object.fromEntries(
+          Array.from(geometryTypes).map(type => [type, true])
+        )
+      };
+
+      console.log('New layer to be added:', newLayer);
+
+      setLayers(prevLayers => {
+        const updatedLayers = [...prevLayers, newLayer];
+        console.log('Updated layers:', updatedLayers);
+        return updatedLayers;
+      });
 
       toast.success(`Successfully loaded ${file.name}`);
     } catch (error: unknown) {

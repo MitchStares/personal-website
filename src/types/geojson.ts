@@ -1,19 +1,19 @@
-// src/types/geojson.ts
-
 import { FeatureCollection, Feature, Geometry, GeoJsonProperties } from 'geojson';
 
 export interface CRS {
-  type: string;
+  type: 'name';
   properties: {
     name: string;
   };
 }
 
-export interface CustomFeatureCollection extends FeatureCollection {
+export interface CustomFeatureCollection extends Omit<FeatureCollection, 'type'> {
+  type: 'FeatureCollection';
   crs?: CRS;
 }
 
-export interface CustomFeature extends Feature {
+export interface CustomFeature extends Omit<Feature, 'type'> {
+  type: 'Feature';
   crs?: CRS;
 }
 

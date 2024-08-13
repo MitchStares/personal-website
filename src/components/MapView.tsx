@@ -1,7 +1,7 @@
-import React, { useCallback, useMemo} from "react";
+import React, { useCallback, useEffect, useMemo} from "react";
 import DeckGL from "@deck.gl/react";
 import StaticMap from "react-map-gl";
-import { GeoJsonLayer, WebMercatorViewport } from "deck.gl";
+import { COORDINATE_SYSTEM, GeoJsonLayer, WebMercatorViewport } from "deck.gl";
 import { ViewStateChangeParameters } from "@deck.gl/core";
 import * as turf from "@turf/turf"; //Spatial Calcs
 import RBush from "rbush"; // Quick Feature Culling
@@ -118,33 +118,30 @@ const MapView: React.FC<MapViewProps> = ({
   };
 
   //Iterating through the layers array using map() and rendering as geojsonlayers.
-  const renderedLayers = layers.map((layer) => {
-    const filteredFeatures = layer.data.features.filter((feature: any) => 
-      layer.visibleGeometryTypes[feature.geometry.type] !== false
-    );
-  
-    return new GeoJsonLayer({
-      id: layer.id,
-      data: {
-        ...layer.data,
-        features: filteredFeatures
-      },
-      visible: layer.visible,
-      filled: true,
-      opacity: layer.transparency,
-      getFillColor: layer.fillColor,
-      stroked: true,
-      getLineColor: layer.lineColor,
-      lineWidthScale: layer.lineWidth,
-      pointRadiusMinPixels: 5,
-      getPointRadius: 100,
-      pickable: true,
-      // Add these for better line rendering
-      lineWidthMinPixels: 1,
-      lineJointRounded: true,
-      lineMiterLimit: 2,
+  const renderedLayers = useMemo(() => {
+    return layers.map((layer) => {
+      return new GeoJsonLayer({
+        id: layer.id,
+        data: layer.data,
+        visible: layer.visible,
+        filled: true,
+        opacity: layer.transparency,
+        getFillColor: layer.fillColor,
+        stroked: true,
+        getLineColor: layer.lineColor,
+        lineWidthScale: layer.lineWidth,
+        pointRadiusScale: 6,
+        getPointRadius: 5,
+        pickable: true,
+        lineWidthMinPixels: 1,
+        lineJointRounded: true,
+        lineMiterLimit: 2,
+        getRadius: 100,
+        radiusMinPixels: 1,
+        radiusMaxPixels: 100,
+      });
     });
-  });
+  }, [layers]);
 
 
   return (

@@ -1,12 +1,13 @@
 /* eslint-disable no-restricted-globals */
 // src/workers/conversionWorker.ts
-import { CustomFeatureCollection, CustomFeature, CRS } from '../types/geojson';
+
+import { CustomFeatureCollection, CustomFeature } from '../types/geojson';
 import proj4 from 'proj4';
 import * as shapefile from 'shapefile';
 import { parse } from 'papaparse';
 import JSZip from 'jszip';
 
-const webMercator = '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs';
+const WGS84 = 'EPSG:4326';
 
 const ctx: Worker = self as any;
 
@@ -14,6 +15,7 @@ ctx.addEventListener('message', async (event: MessageEvent) => {
   const { file, fileType } = event.data;
   
   try {
+    console.log(`Processing file: ${file.name}, type: ${fileType}`);
     let geoJSON: CustomFeatureCollection;
     switch (fileType) {
       case 'geojson':
@@ -30,8 +32,10 @@ ctx.addEventListener('message', async (event: MessageEvent) => {
         throw new Error('Unsupported file format');
     }
     
+    console.log('Converted GeoJSON:', geoJSON);
     ctx.postMessage({ geoJSON, success: true });
   } catch (error: unknown) {
+    console.error('Error in worker:', error);
     if (error instanceof Error) {
       ctx.postMessage({ error: error.message, success: false });
     } else {
@@ -41,8 +45,10 @@ ctx.addEventListener('message', async (event: MessageEvent) => {
 });
 
 async function handleGeoJSON(file: File): Promise<CustomFeatureCollection> {
+  console.log('Handling GeoJSON file');
   const text = await file.text();
   const geoJSON = JSON.parse(text) as CustomFeatureCollection;
+  console.log('Parsed GeoJSON:', geoJSON);
   return reprojectGeoJSON(geoJSON);
 }
 
@@ -66,14 +72,14 @@ async function handleShapefile(file: File): Promise<CustomFeatureCollection> {
   const shpBuffer = await shpFile.async('arraybuffer');
   const dbfBuffer = await dbfFile.async('arraybuffer');
 
-  let sourceCRS = 'EPSG:4326'; // Default to WGS84
+  let sourceCRS = WGS84;
   if (prjFile) {
     const prjContent = await prjFile.async('text');
     sourceCRS = prjContent.trim();
   }
 
   const source = await shapefile.open(shpBuffer, dbfBuffer);
-  const features: GeoJSON.Feature[] = [];
+  const features: CustomFeature[] = [];
 
   let result;
   while ((result = await source.read()) && !result.done) {
@@ -95,14 +101,17 @@ async function handleShapefile(file: File): Promise<CustomFeatureCollection> {
 }
 
 function reprojectGeoJSON(geoJSON: CustomFeatureCollection): CustomFeatureCollection {
-  const sourceCRS = geoJSON.crs?.properties?.name || 'EPSG:4326';
+  console.log('Reprojecting GeoJSON');
+  const sourceCRS = geoJSON.crs?.properties?.name || WGS84;
+  console.log('Source CRS:', sourceCRS);
   
-  if (sourceCRS === 'EPSG:3857') {
-    return geoJSON; // Already in Web Mercator
+  if (sourceCRS === WGS84) {
+    console.log('Already in WGS84, no reprojection needed');
+    return geoJSON;
   }
 
   const reprojectPoint = (coords: number[]): number[] => {
-    const [x, y] = proj4(sourceCRS, webMercator, coords);
+    const [x, y] = proj4(sourceCRS, WGS84, coords);
     return [x, y];
   };
 
@@ -143,7 +152,7 @@ function reprojectGeoJSON(geoJSON: CustomFeatureCollection): CustomFeatureCollec
     crs: {
       type: 'name',
       properties: {
-        name: 'EPSG:3857',
+        name: WGS84,
       },
     },
     features: geoJSON.features.map(reprojectFeature),
@@ -152,7 +161,7 @@ function reprojectGeoJSON(geoJSON: CustomFeatureCollection): CustomFeatureCollec
 
 function convertCSVToGeoJSON(csvText: string): CustomFeatureCollection {
   const { data } = parse(csvText, { header: true });
-  const features: GeoJSON.Feature[] = data.map((row: any) => {
+  const features: CustomFeature[] = data.map((row: any) => {
     const lat = parseFloat(row.latitude || row.lat);
     const lon = parseFloat(row.longitude || row.lon || row.lng);
 
@@ -160,13 +169,11 @@ function convertCSVToGeoJSON(csvText: string): CustomFeatureCollection {
       throw new Error('CSV must contain latitude and longitude columns');
     }
 
-    const [x, y] = proj4('EPSG:4326', webMercator, [lon, lat]);
-
     return {
       type: 'Feature',
       geometry: {
         type: 'Point',
-        coordinates: [x, y],
+        coordinates: [lon, lat],
       },
       properties: row,
     };
@@ -177,7 +184,7 @@ function convertCSVToGeoJSON(csvText: string): CustomFeatureCollection {
     crs: {
       type: 'name',
       properties: {
-        name: 'EPSG:3857',
+        name: WGS84,
       },
     },
     features,
