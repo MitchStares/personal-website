@@ -9,6 +9,10 @@ import debounce from "lodash/debounce"; // Mouse Abuse delay
 // import FeatureCounter from "./FeatureCounter";
 import BaseLayerSelector from "./BaseLayerSelector";
 import { RBushItem, LayerCount } from "../types";
+import { scaleLinear, scaleOrdinal } from 'd3-scale';
+import { interpolateViridis, interpolatePlasma, interpolateInferno, interpolateMagma, interpolateCividis } from 'd3-scale-chromatic';
+import { schemeCategory10, schemeAccent, schemeDark2, schemePaired, schemeSet1, schemeSet2, schemeSet3, schemePastel1, schemePastel2 } from 'd3-scale-chromatic';
+
 
 //Props coming from MapPage
 interface MapViewProps {
@@ -34,6 +38,7 @@ const MapView: React.FC<MapViewProps> = ({
   sidebarOpen,
   onLayerCountsUpdate,
 }) => {
+
   // const [visibleFeatureCount, setVisibleFeatureCount] = React.useState(0);
 
   const countVisibleFeatures = useCallback(
@@ -117,12 +122,89 @@ const MapView: React.FC<MapViewProps> = ({
     }
   };
 
+
+  const getColorFunction = (colorGradient: string) => {
+    switch (colorGradient) {
+      case 'viridis': return interpolateViridis;
+      case 'plasma': return interpolatePlasma;
+      case 'inferno': return interpolateInferno;
+      case 'magma': return interpolateMagma;
+      case 'cividis': return interpolateCividis;
+      default: return interpolateViridis;
+    }
+  };
+  const getCategoricalColorScheme = (scheme: string) => {
+    switch (scheme) {
+      case 'category10': return schemeCategory10;
+      case 'accent': return schemeAccent;
+      case 'dark2': return schemeDark2;
+      case 'paired': return schemePaired;
+      case 'set1': return schemeSet1;
+      case 'set2': return schemeSet2;
+      case 'set3': return schemeSet3;
+      case 'pastel1': return schemePastel1;
+      case 'pastel2': return schemePastel2;
+      default: return schemeCategory10;
+    }
+  };
+  const getColorScale = (layer: any, colorAttribute: string, colorScheme: string) => {
+    const values = layer.data.features.map((f: any) => f.properties[colorAttribute]);
+
+    if (values.every((v: any) => typeof v === 'number' && !isNaN(v))) {
+      // Numeric data - use continuous color scale
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const colorScale = scaleLinear().domain([min, max]).range([0, 1]);
+      const colorFunction = getColorFunction(colorScheme || 'viridis');
+      return (value: number) => {
+        const scaledValue = colorScale(value);
+        const color = colorFunction(scaledValue);
+        return color.match(/\d+/g)?.map(Number) || [0, 0, 0];
+      };
+    } else {
+      // Categorical data - use ordinal color scale
+      const uniqueValues = Array.from(new Set(values)).filter((value): value is string => 
+        typeof value === 'string' || typeof value === 'number'
+      ).map(String);
+      const colorSchemeArray = getCategoricalColorScheme(colorScheme || 'category10');
+      const colorScale = scaleOrdinal<string>().domain(uniqueValues).range(colorSchemeArray);
+      return (value: string | number) => {
+        const color = colorScale(String(value));
+        return color.match(/\d+/g)?.map(Number) || [0, 0, 0];
+      };
+    }
+  };
+
   //Iterating through the layers array using map() and rendering as geojsonlayers.
   const renderedLayers = layers.map((layer) => {
+    console.log('Rendering layer:', layer);
+
     const filteredFeatures = layer.data.features.filter((feature: any) => 
-      layer.visibleGeometryTypes[feature.geometry.type] !== false
+      layer.selectedGeometryType ? feature.geometry.type === layer.selectedGeometryType : true
     );
-  
+
+    let getFillColor, getLineColor;
+
+    if (layer.fillColorAttribute && layer.fillColorAttribute !== '') {
+      const fillColorScale = getColorScale(layer, layer.fillColorAttribute, layer.fillColorScheme);
+      getFillColor = (f: any) => {
+        const value = f.properties[layer.fillColorAttribute];
+        return fillColorScale(value);
+      };
+    } else {
+      getFillColor = layer.fillColor;
+    }
+
+    if (layer.lineColorAttribute && layer.lineColorAttribute !== '') {
+      const lineColorScale = getColorScale(layer, layer.lineColorAttribute, layer.lineColorScheme);
+      getLineColor = (f: any) => {
+        const value = f.properties[layer.lineColorAttribute];
+        return lineColorScale(value);
+      };
+    } else {
+      getLineColor = layer.lineColor;
+    }
+
     return new GeoJsonLayer({
       id: layer.id,
       data: {
@@ -132,9 +214,9 @@ const MapView: React.FC<MapViewProps> = ({
       visible: layer.visible,
       filled: true,
       opacity: layer.transparency,
-      getFillColor: layer.fillColor,
+      getFillColor,
       stroked: true,
-      getLineColor: layer.lineColor,
+      getLineColor,
       lineWidthScale: layer.lineWidth,
       pointRadiusMinPixels: 5,
       getPointRadius: 100,

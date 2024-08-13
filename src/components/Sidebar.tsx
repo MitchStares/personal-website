@@ -9,6 +9,7 @@ import {
 import { LayerCount } from "../types";
 import { Link } from "react-router-dom";
 import DataTablePopup from "./DataTablePopup";
+import ColorSelector from "./ColourSelector";
 
 interface SidebarProps {
   onFileUpload: (file: File) => void;
@@ -208,57 +209,22 @@ const Sidebar: React.FC<SidebarProps> = ({
                           />
                         </div>
 
-                        {/* Fill Color Input */}
-                        <div className="mb-4">
-                          <label className="block text-sm mb-2">
-                            Fill Color
-                          </label>
-                          <SketchPicker
-                            color={{
-                              r: layer.fillColor[0],
-                              g: layer.fillColor[1],
-                              b: layer.fillColor[2],
-                            }}
-                            onChange={(color) => {
-                              const newColor = [
-                                color.rgb.r,
-                                color.rgb.g,
-                                color.rgb.b,
-                              ];
-                              onLayerSettingChange(
-                                index,
-                                "fillColor",
-                                newColor
-                              );
-                            }}
-                          />
-                        </div>
-
-                        {/* Line Color Input */}
-                        <div className="mb-4">
-                          <label className="block text-sm mb-2">
-                            Line Color
-                          </label>
-                          <SketchPicker
-                            color={{
-                              r: layer.lineColor[0],
-                              g: layer.lineColor[1],
-                              b: layer.lineColor[2],
-                            }}
-                            onChange={(color) => {
-                              const newColor = [
-                                color.rgb.r,
-                                color.rgb.g,
-                                color.rgb.b,
-                              ];
-                              onLayerSettingChange(
-                                index,
-                                "lineColor",
-                                newColor
-                              );
-                            }}
-                          />
-                        </div>
+{/* Color Selector */}
+<ColorSelector
+                    layer={layer}
+                    onColorChange={(colorType, value) => {
+                      onLayerSettingChange(index, colorType, value);
+                    }}
+                    onAttributeChange={(attribute, target) => {
+                      onLayerSettingChange(index, `${target}ColorAttribute`, attribute);
+                    }}
+                    onColorSchemeChange={(scheme, target) => {
+                      onLayerSettingChange(index, `${target}ColorScheme`, scheme);
+                    }}
+                    onGeometryTypeChange={(geometryType) => {
+                      onLayerSettingChange(index, "selectedGeometryType", geometryType);
+                    }}
+                  />
 
                         {/* Line Width Input */}
                         <div className="mb-4">

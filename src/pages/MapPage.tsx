@@ -58,9 +58,8 @@ const MapPage: React.FC = () => {
         const layerId = `geojson-layer-${layers.length}`;
         const layerName = `Layer ${layers.length + 1}`;
   
-        // Determining which geometry types are present in the layer
         const geometryTypes = new Set(json.features.map((feature: any) => feature.geometry.type));
-        console.log("Detected geometry types:", Array.from(geometryTypes)); // Add this line for debugging
+        console.log("Detected geometry types:", Array.from(geometryTypes));
   
         json.features = json.features.map((feature: any) => ({
           ...feature,
@@ -84,7 +83,13 @@ const MapPage: React.FC = () => {
             geometryTypes: Array.from(geometryTypes),
             visibleGeometryTypes: Object.fromEntries(
               Array.from(geometryTypes).map(type => [type, true])
-            )
+            ),
+            fillColorAttribute: '',
+            fillColorScheme: '',
+            lineColorAttribute: '',
+            lineColorScheme: '',
+            selectedGeometryType: '',
+            dataTypes: {}
           }
         ]);
       }
@@ -102,6 +107,14 @@ const MapPage: React.FC = () => {
           ...newLayers[index],
           visibleGeometryTypes: {
             ...newLayers[index].visibleGeometryTypes,
+            ...value
+          }
+        };
+      } else if (key === 'dataTypes') {
+        newLayers[index] = {
+          ...newLayers[index],
+          dataTypes: {
+            ...newLayers[index].dataTypes,
             ...value
           }
         };
