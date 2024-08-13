@@ -64,6 +64,13 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
+  const handleDataTypesChange = (layerId: string, newDataTypes: {[key: string]: string}) => {
+    const layerIndex = layers.findIndex(layer => layer.id === layerId);
+    if (layerIndex !== -1) {
+      onLayerSettingChange(layerIndex, 'dataTypes', newDataTypes);
+    }
+  };
+
   useEffect(() => {
     setExpandedLayers(Array(layers.length).fill(false));
   }, [layers.length]);
@@ -400,6 +407,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <DataTablePopup
           layer={layers[showDataTable]}
           onClose={() => setShowDataTable(null)}
+          onDataTypesChange={handleDataTypesChange}
         />
       )}
     </div>

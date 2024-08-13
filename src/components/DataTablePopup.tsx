@@ -3,9 +3,10 @@ import React, { useState, useEffect } from 'react';
 interface DataTablePopupProps {
   layer: any;
   onClose: () => void;
+  onDataTypesChange: (layerId: string, newDataTypes: {[key: string]: string}) => void;
 }
 
-const DataTablePopup: React.FC<DataTablePopupProps> = ({ layer, onClose }) => {
+const DataTablePopup: React.FC<DataTablePopupProps> = ({ layer, onClose, onDataTypesChange }) => {
   const [attributes, setAttributes] = useState<string[]>([]);
   const [data, setData] = useState<any[]>([]);
   const [dataTypes, setDataTypes] = useState<{[key: string]: string}>({});
@@ -17,6 +18,9 @@ const DataTablePopup: React.FC<DataTablePopupProps> = ({ layer, onClose }) => {
       setAttributes(attrs);
 
       // Infer data types
+      if (layer.dataTypes) {
+        setDataTypes(layer.dataTypes);
+      } else {
       const types: {[key: string]: string} = {};
       attrs.forEach(attr => {
         const value = firstFeature.properties[attr];
@@ -31,13 +35,15 @@ const DataTablePopup: React.FC<DataTablePopupProps> = ({ layer, onClose }) => {
         }
       });
       setDataTypes(types);
-
+    }
       setData(layer.data.features.slice(0, 100).map((f: any) => f.properties));
     }
   }, [layer]);
 
   const handleTypeChange = (attribute: string, newType: string) => {
-    setDataTypes(prev => ({ ...prev, [attribute]: newType }));
+    const newDataTypes = {...dataTypes, [attribute]: newType};
+    setDataTypes(newDataTypes);
+    onDataTypesChange(layer.id, newDataTypes);
   };
 
   return (
