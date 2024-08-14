@@ -17,25 +17,26 @@ const DataTablePopup: React.FC<DataTablePopupProps> = ({ layer, onClose, onDataT
       const attrs = Object.keys(firstFeature.properties);
       setAttributes(attrs);
 
-      // Infer data types
       if (layer.dataTypes) {
         setDataTypes(layer.dataTypes);
       } else {
-      const types: {[key: string]: string} = {};
-      attrs.forEach(attr => {
-        const value = firstFeature.properties[attr];
-        if (typeof value === 'number') {
-          types[attr] = 'number';
-        } else if (typeof value === 'string') {
-          types[attr] = 'string';
-        } else if (typeof value === 'boolean') {
-          types[attr] = 'boolean';
-        } else {
-          types[attr] = 'unknown';
-        }
-      });
-      setDataTypes(types);
-    }
+        const types: {[key: string]: string} = {};
+        attrs.forEach(attr => {
+          const value = firstFeature.properties[attr];
+          if (typeof value === 'number') {
+            types[attr] = 'number';
+          } else if (typeof value === 'string') {
+            types[attr] = 'string';
+          } else if (typeof value === 'boolean') {
+            types[attr] = 'boolean';
+          } else if (typeof value === 'object') {
+            types[attr] = 'object';
+          } else {
+            types[attr] = 'unknown';
+          }
+        });
+        setDataTypes(types);
+      }
       setData(layer.data.features.slice(0, 100).map((f: any) => f.properties));
     }
   }, [layer]);
@@ -44,6 +45,13 @@ const DataTablePopup: React.FC<DataTablePopupProps> = ({ layer, onClose, onDataT
     const newDataTypes = {...dataTypes, [attribute]: newType};
     setDataTypes(newDataTypes);
     onDataTypesChange(layer.id, newDataTypes);
+  };
+
+  const renderCellValue = (value: any) => {
+    if (typeof value === 'object' && value !== null) {
+      return JSON.stringify(value);
+    }
+    return String(value);
   };
 
   return (
@@ -72,6 +80,7 @@ const DataTablePopup: React.FC<DataTablePopupProps> = ({ layer, onClose, onDataT
                     <option value="string">String</option>
                     <option value="number">Number</option>
                     <option value="boolean">Boolean</option>
+                    <option value="object">Object</option>
                   </select>
                 </th>
               ))}
@@ -81,7 +90,7 @@ const DataTablePopup: React.FC<DataTablePopupProps> = ({ layer, onClose, onDataT
             {data.map((row, index) => (
               <tr key={index}>
                 {attributes.map(attr => (
-                  <td key={attr} className="border p-2">{row[attr]}</td>
+                  <td key={attr} className="border p-2">{renderCellValue(row[attr])}</td>
                 ))}
               </tr>
             ))}
