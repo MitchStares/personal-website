@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { fetchBlogById, updateBlog } from "../services/blogService";
 import ReactMarkdown from "react-markdown";
 import MarkdownEditor from "./MarkdownEditor";
 import ImageUpload from "./ImageUpload";
+import { logPageView, getPathFromHash } from '../analytics';
 
 interface BlogDetailProps {
   user: any;
@@ -11,6 +12,7 @@ interface BlogDetailProps {
 
 const BlogDetail: React.FC<BlogDetailProps> = ({ user }) => {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
   const [blog, setBlog] = useState<{
     title: string;
     content: string;
@@ -30,6 +32,8 @@ const BlogDetail: React.FC<BlogDetailProps> = ({ user }) => {
         setTitle(response?.title || "");
         setContent(response?.content || "");
         setHeaderImageUrl(response?.imageUrl || null);
+        const path = getPathFromHash(location.hash);
+        logPageView(path);
       }
     };
 

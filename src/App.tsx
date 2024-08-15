@@ -10,9 +10,9 @@ import MarkdownEditorPage from './pages/MarkdownEditorPage';
 import MapPage from './pages/MapPage';
 import Auth from './components/Auth';
 import ProtectedRoute from './components/ProtectedRoute';
-import { initGA, logPageView } from './analytics';
+import { initGA, logPageView, getPathFromHash } from './analytics';
 
-
+// Initialize Google Analytics
 initGA(process.env.REACT_APP_GA_MEASUREMENT_ID || '');
 
 const App: React.FC = () => {
@@ -39,7 +39,9 @@ const AppContent: React.FC<{ user: any }> = ({ user }) => {
   const location = useLocation();
 
   useEffect(() => {
-    logPageView(); // Log page view on route change
+    // Get the path from the hash and log the page view
+    const path = getPathFromHash(location.hash);
+    logPageView(path);
   }, [location]);
 
   return (
