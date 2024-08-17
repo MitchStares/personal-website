@@ -8,7 +8,7 @@ import RBush from "rbush"; // Quick Feature Culling
 import debounce from "lodash/debounce"; // Mouse Abuse delay
 // import FeatureCounter from "./FeatureCounter";
 import BaseLayerSelector from "./BaseLayerSelector";
-import { RBushItem, LayerCount } from "../types";
+import { RBushItem, LayerCount, AttributeCounter } from "../types";
 import { scaleLinear, scaleOrdinal } from 'd3-scale';
 import { interpolateViridis, interpolatePlasma, interpolateInferno, interpolateMagma, interpolateCividis } from 'd3-scale-chromatic';
 import { schemeCategory10, schemeAccent, schemeDark2, schemePaired, schemeSet1, schemeSet2, schemeSet3, schemePastel1, schemePastel2 } from 'd3-scale-chromatic';
@@ -25,6 +25,8 @@ interface MapViewProps {
   onStyleChange: (style: string) => void;
   sidebarOpen: boolean;
   onLayerCountsUpdate: (counts: LayerCount[]) => void;
+  attributeCounters: AttributeCounter[];
+  onAttributeCountsUpdate: (counts: { [key: string]: number }[]) => void;
 }
 
 const MapView: React.FC<MapViewProps> = ({
@@ -37,13 +39,15 @@ const MapView: React.FC<MapViewProps> = ({
   onStyleChange,
   sidebarOpen,
   onLayerCountsUpdate,
+  attributeCounters,
+  onAttributeCountsUpdate,
 }) => {
 
   // const [visibleFeatureCount, setVisibleFeatureCount] = React.useState(0);
 
   const countVisibleFeatures = useCallback(
-    (viewportBounds: [number, number, number, number]): LayerCount[] => {
-      if (!spatialIndex) return [];
+    (viewportBounds: [number, number, number, number]): [LayerCount[], { [key: string]: number }[]] => {
+      if (!spatialIndex) return [[], []];
 
       const viewportFeatures = spatialIndex.search({
         minX: viewportBounds[0],
@@ -54,8 +58,8 @@ const MapView: React.FC<MapViewProps> = ({
 
       const viewportBbox = turf.bboxPolygon(viewportBounds);
 
-      //filtering spatialIndex using intersect for polygon and cross or within for line. Point not needed as its a simple calculation
-      const counts = layers.map((layer) => {
+    //filtering spatialIndex using intersect for polygon and cross or within for line. Point not needed as its a simple calculation
+      const layerCounts = layers.map((layer) => {
         const layerFeatures = viewportFeatures.filter(
           (item) => item.feature.properties.layerId === layer.id
         );
@@ -81,19 +85,32 @@ const MapView: React.FC<MapViewProps> = ({
         return { id: layer.id, name: layer.name, count: visibleCount };
       });
 
-      return counts;
-    },
-    [spatialIndex, layers]
-  );
+      // Count attributes for each counter
+      const attributeCounts = attributeCounters.map((counter) => {
+        const layerFeatures = viewportFeatures.filter(
+          (item) => item.feature.properties.layerId === counter.layerId
+        );
+        const counts: { [key: string]: number } = {};
+        layerFeatures.forEach((item) => {
+          const value = item.feature.properties[counter.attribute];
+          counts[value] = (counts[value] || 0) + 1;
+        });
+        return counts;
+      });
 
+      return [layerCounts, attributeCounts];
+    },
+    [spatialIndex, layers, attributeCounters]
+  );
   // Our mouse abuse function. Waits until 200ms have passed since viewportBounds has been updated.
   const debouncedUpdateVisibleFeatures = useMemo(
     () =>
       debounce((bounds: [number, number, number, number]) => {
-        const counts = countVisibleFeatures(bounds);
-        onLayerCountsUpdate(counts);
+        const [layerCounts, attributeCounts] = countVisibleFeatures(bounds);
+        onLayerCountsUpdate(layerCounts);
+        onAttributeCountsUpdate(attributeCounts);
       }, 200),
-    [countVisibleFeatures, onLayerCountsUpdate]
+    [countVisibleFeatures, onLayerCountsUpdate, onAttributeCountsUpdate]
   );
 
   //Just collecting viewState from viewport. No need for anythign else.

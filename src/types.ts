@@ -12,3 +12,8 @@ export interface RBushItem {
     maxY: number;
     feature: any;
   }
+  export interface AttributeCounter {
+    layerId: string;
+    attribute: string;
+    counts?: { [key: string]: number };
+  }

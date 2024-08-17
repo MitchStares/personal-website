@@ -6,7 +6,7 @@ import {
   FaChevronLeft,
   FaCog,
 } from "react-icons/fa";
-import { LayerCount } from "../types";
+import { AttributeCounter, LayerCount } from "../types";
 import { Link } from "react-router-dom";
 import DataTablePopup from "./DataTablePopup";
 import ColorSelector from "./ColourSelector";
@@ -20,8 +20,11 @@ interface SidebarProps {
   onOptionChange: (option: string, value: any) => void;
   options: { [key: string]: any };
   insights: Array<{ title: string; value: string | number }>;
-  layerCounts: LayerCount[];
   onPopoutInsights: () => void;
+  layerCounts: LayerCount[];
+  attributeCounters: AttributeCounter[];
+  onAddAttributeCounter: (layerId: string, attribute: string) => void;
+  onRemoveAttributeCounter: (index: number) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -34,6 +37,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   options,
   insights,
   layerCounts,
+  attributeCounters,
+  onAddAttributeCounter,
+  onRemoveAttributeCounter,
   onPopoutInsights,
 }) => {
   const [activeSection, setActiveSection] = useState<string | null>(null);
@@ -41,6 +47,9 @@ const Sidebar: React.FC<SidebarProps> = ({
     Array(layers.length).fill(false)
   );
   const [showDataTable, setShowDataTable] = useState<number | null>(null);
+  const [showAddCounter, setShowAddCounter] = useState(false);
+  const [selectedLayer, setSelectedLayer] = useState("");
+  const [selectedAttribute, setSelectedAttribute] = useState("");
 
   useEffect(() => {
     onToggleSidebar(activeSection !== null);
@@ -71,10 +80,93 @@ const Sidebar: React.FC<SidebarProps> = ({
       onLayerSettingChange(layerIndex, 'dataTypes', newDataTypes);
     }
   };
+  const handleAddCounter = () => {
+    if (selectedLayer && selectedAttribute) {
+      onAddAttributeCounter(selectedLayer, selectedAttribute);
+      setShowAddCounter(false);
+      setSelectedLayer("");
+      setSelectedAttribute("");
+    }
+  };
 
   useEffect(() => {
     setExpandedLayers(Array(layers.length).fill(false));
   }, [layers.length]);
+
+  const renderInsights = () => {
+    return (
+      <div className="bg-gray-100 p-4 rounded-lg shadow-inner">
+        <h2 className="text-xl font-semibold mb-4 text-gray-800">Insights</h2>
+        
+        {/* General Insights */}
+        {insights.map((insight, index) => (
+          <div key={index} className="mb-2 bg-white p-3 rounded-md shadow">
+            <h3 className="font-semibold text-gray-700">{insight.title}</h3>
+            <p className="text-gray-600">{insight.value}</p>
+          </div>
+        ))}
+
+        {/* Layer Counts */}
+        <h3 className="text-lg font-semibold mt-4 mb-2 text-gray-800">
+          Visible Features by Layer
+          <button
+            onClick={onPopoutInsights}
+            className="ml-2 text-sm bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
+          >
+            Pop Out
+          </button>
+        </h3>
+        {layerCounts
+          .filter((layerCount) =>
+            layers.find((layer) => layer.id === layerCount.id && layer.visible)
+          )
+          .map((layerCount, index) => (
+            <div
+              key={index}
+              className="mb-1 flex justify-between bg-white p-2 rounded-md shadow"
+            >
+              <span className="text-gray-700">{layerCount.name}:</span>
+              <span className="font-semibold text-gray-800">
+                {layerCount.count}
+              </span>
+            </div>
+          ))}
+
+        {/* Attribute Counters */}
+        <h3 className="text-lg font-semibold mt-6 mb-2 text-gray-800">
+          Attribute Counters
+        </h3>
+        {attributeCounters.map((counter, index) => (
+          <div key={index} className="mb-4 bg-white p-3 rounded-md shadow">
+            <div className="flex justify-between items-center mb-2">
+              <span className="font-semibold text-gray-700">
+                {`${layers.find(l => l.id === counter.layerId)?.name} - ${counter.attribute}`}
+              </span>
+              <button
+                onClick={() => onRemoveAttributeCounter(index)}
+                className="text-red-600 hover:text-red-800"
+              >
+                Remove
+              </button>
+            </div>
+            {counter.counts && Object.entries(counter.counts).map(([value, count]) => (
+              <div key={value} className="flex justify-between items-center">
+                <span className="text-gray-600">{value}:</span>
+                <span className="font-semibold text-gray-800">{count}</span>
+              </div>
+            ))}
+          </div>
+        ))}
+
+        <button
+          onClick={() => setShowAddCounter(true)}
+          className="w-full py-2 px-4 bg-green-700 text-white rounded-md hover:bg-green-800 transition-colors duration-300 mt-4"
+        >
+          Add Attribute Counter
+        </button>
+      </div>
+    );
+  };
 
   return (
     <div className="fixed top-0 left-0 h-full z-10 flex">
@@ -251,50 +343,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               </div>
             )}
 
-            {activeSection === "insights" && (
-              <div className="bg-gray-100 p-4 rounded-lg shadow-inner">
-                <h2 className="text-xl font-semibold mb-4 text-gray-800">
-                  Insights
-                </h2>
-                {insights.map((insight, index) => (
-                  <div
-                    key={index}
-                    className="mb-2 bg-white p-3 rounded-md shadow"
-                  >
-                    <h3 className="font-semibold text-gray-700">
-                      {insight.title}
-                    </h3>
-                    <p className="text-gray-600">{insight.value}</p>
-                  </div>
-                ))}
-                <h3 className="text-lg font-semibold mt-4 mb-2 text-gray-800">
-                  Visible Features by Layer
-                  <button
-                    onClick={onPopoutInsights}
-                    className="text-sm bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
-                  >
-                    Pop Out
-                  </button>
-                </h3>
-                {layerCounts
-                  .filter((layerCount) =>
-                    layers.find(
-                      (layer) => layer.id === layerCount.id && layer.visible
-                    )
-                  )
-                  .map((layerCount, index) => (
-                    <div
-                      key={index}
-                      className="mb-1 flex justify-between bg-white p-2 rounded-md shadow"
-                    >
-                      <span className="text-gray-700">{layerCount.name}:</span>
-                      <span className="font-semibold text-gray-800">
-                        {layerCount.count}
-                      </span>
-                    </div>
-                  ))}
-              </div>
-            )}
+            {activeSection === "insights" && renderInsights()}
 
             {activeSection === "options" && (
               <div>
@@ -375,6 +424,55 @@ const Sidebar: React.FC<SidebarProps> = ({
           onClose={() => setShowDataTable(null)}
           onDataTypesChange={handleDataTypesChange}
         />
+      )}
+
+      {/* Add Attribute Counter Popup */}
+      {showAddCounter && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-xl">
+            <h2 className="text-xl font-bold mb-4">Add Attribute Counter</h2>
+            <select
+              value={selectedLayer}
+              onChange={(e) => setSelectedLayer(e.target.value)}
+              className="w-full mb-2 p-2 border rounded"
+            >
+              <option value="">Select Layer</option>
+              {layers.map((layer) => (
+                <option key={layer.id} value={layer.id}>
+                  {layer.name}
+                </option>
+              ))}
+            </select>
+            {selectedLayer && (
+              <select
+                value={selectedAttribute}
+                onChange={(e) => setSelectedAttribute(e.target.value)}
+                className="w-full mb-4 p-2 border rounded"
+              >
+                <option value="">Select Attribute</option>
+                {Object.keys(layers.find((l) => l.id === selectedLayer)?.data.features[0].properties || {}).map((attr) => (
+                  <option key={attr} value={attr}>
+                    {attr}
+                  </option>
+                ))}
+</select>
+            )}
+            <div className="flex justify-end">
+              <button
+                onClick={handleAddCounter}
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 mr-2"
+              >
+                Add
+              </button>
+              <button
+                onClick={() => setShowAddCounter(false)}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

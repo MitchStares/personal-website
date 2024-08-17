@@ -5,7 +5,7 @@ import MapView from '../components/MapView';
 import RBush from 'rbush';
 import * as turf from '@turf/turf';
 // import { calculateAverageArea } from '../utils/calculateAverageArea';
-import {LayerCount, RBushItem} from "../types";
+import {LayerCount, RBushItem, AttributeCounter} from "../types";
 import PopoutInsights from '../components/PopoutInsights';
 
 
@@ -28,6 +28,9 @@ const MapPage: React.FC = () => {
   const [spatialIndex, setSpatialIndex] = useState<RBush<RBushItem> | null>(null);
   const [layerCounts, setLayerCounts] = useState<LayerCount[]>([]);
   const [showPopoutInsights, setShowPopoutInsights] = useState(false);
+  const [attributeCounters, setAttributeCounters] = useState<AttributeCounter[]>([])
+  const [totalVisibleFeatures, setTotalVisibleFeatures] = useState(0);
+
 
   //Creating the spatial index for each feature using RBush for use in MapView
   useEffect(() => {
@@ -146,6 +149,13 @@ const MapPage: React.FC = () => {
     { title: 'Total Features', value: 0 },
     { title: 'Average Area', value: 0 },
   ]);
+  useEffect(() => {
+    // Update insights when totalVisibleFeatures changes
+    setInsights(prev => [
+      { title: 'Total Visible Features', value: totalVisibleFeatures },
+      prev[1] // Keep the 'Average Area' insight unchanged
+    ]);
+  }, [totalVisibleFeatures]);
 
   const [options, setOptions] = useState({
     showLabels: true,
@@ -170,14 +180,25 @@ const MapPage: React.FC = () => {
 
   const handleLayerCountsUpdate = (counts: LayerCount[]) => {
     setLayerCounts(counts);
-    // Calculate total visible features
-    const totalVisibleFeatures = counts.reduce((sum, layer) => sum + layer.count, 0);
-    
-    // Update insights
-    setInsights([
-      { title: 'Total Visible Features', value: totalVisibleFeatures },
-      // { title: 'Average Area', value: 0 }, // You can update this when you implement calculateAverageArea
-    ]);
+    const total = counts.reduce((sum, layer) => sum + layer.count, 0);
+    setTotalVisibleFeatures(total);
+  };
+  
+  const handleAddAttributeCounter = (layerId: string, attribute: string) => {
+     setAttributeCounters(prev => [...prev, { layerId, attribute, counts: {} }]);
+  };
+  
+  const handleRemoveAttributeCounter = (index: number) => {
+    setAttributeCounters(prev => prev.filter((_, i) => i !== index));
+  };
+  
+  const handleAttributeCountsUpdate = (counts: { [key: string]: number }[]) => {
+    setAttributeCounters(prev => 
+      prev.map((counter, index) => ({
+        ...counter,
+        counts: counts[index] || {}
+      }))
+    );
   };
 
     return (
@@ -193,6 +214,9 @@ const MapPage: React.FC = () => {
           insights={insights}
           layerCounts={layerCounts}
           onPopoutInsights={() => setShowPopoutInsights(true)}
+          attributeCounters={attributeCounters}
+          onAddAttributeCounter={handleAddAttributeCounter}
+          onRemoveAttributeCounter={handleRemoveAttributeCounter}
         />
         <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
           {MAPBOX_ACCESS_TOKEN ? (
@@ -207,6 +231,8 @@ const MapPage: React.FC = () => {
                 onStyleChange={setMapStyle}
                 sidebarOpen={sidebarOpen}
                 onLayerCountsUpdate={handleLayerCountsUpdate}
+                attributeCounters={attributeCounters}
+                onAttributeCountsUpdate={handleAttributeCountsUpdate}
               />
               {showPopoutInsights && (
                 <PopoutInsights
