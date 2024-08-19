@@ -63,7 +63,7 @@ const Navbar: React.FC = () => {
           <Link to="/blog" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-green-700 hover:bg-gray-50">Blog</Link>
           <Link to="/map" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-green-700 hover:bg-gray-50">Projects</Link>
           <Link to="/auth" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-green-700 hover:bg-gray-50">Sign In</Link>
-          <Link to="/map" className="block px-3 py-2 rounded-md text-base font-medium bg-green-800 text-white hover:bg-green-700">Current Project</Link>
+          <Link to="/map" className="block px-3 py-2 rounded-md text-base font-medium bg-green-800 text-white hover:bg-green-700">Spatial Insights</Link>
         </div>
       </div>
     </header>
