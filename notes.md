@@ -9,8 +9,15 @@
 8. GeoParquet support?
 9. SQL database connection? BigQuery?
 10. Pre-defined or built in layers such as administrative boundaries, census data etc. 
-11. Point size, Line vs point layer (see openstreetmap ways query below)
+11. Point size, ~~Line vs point layer (see openstreetmap ways query below)~~
+12. Ability to add new sidebar pullout tab for text/markdown editing. Include inline image uploads and display
+13. Sidebar Graphs using D3
+14. Customisable sidebar widgets. Graphs (bar, chart etc), cards, text
+15. On-upload transformation sequence (eventual sql integration) using graphical, no-code editor. Think DAGs, Tableau's data pipeline, ADF etc.
 
+## Utility Tools  
+Create a utility tool for querying data quality of datasets. Potentially add a CRS transformation tool, file conversion, clipping etc. 
+Does not need to be a flashy Single page app or super complicated in its stack. Just needs to have a very basic front-end UI with some back-end processing or client-side processing. 
 
 **Example overpass turbo query**
 [out:json];
