@@ -3,6 +3,7 @@ import DeckGL from "@deck.gl/react";
 import StaticMap from "react-map-gl";
 import { GeoJsonLayer, WebMercatorViewport } from "deck.gl";
 import { ViewStateChangeParameters } from "@deck.gl/core";
+// import {BinaryFeatureCollection} from '@loaders.gl/gis';
 import * as turf from "@turf/turf"; //Spatial Calcs
 import RBush from "rbush"; // Quick Feature Culling
 import debounce from "lodash/debounce"; // Mouse Abuse delay
@@ -228,6 +229,10 @@ const MapView: React.FC<MapViewProps> = ({
         ...layer.data,
         features: filteredFeatures
       },
+      binary: true,
+      loadOptions: {
+        gis: {format: 'geojson'}
+      },
       visible: layer.visible,
       filled: true,
       opacity: layer.transparency,
@@ -242,6 +247,10 @@ const MapView: React.FC<MapViewProps> = ({
       lineWidthMinPixels: 1,
       lineJointRounded: true,
       lineMiterLimit: 2,
+      updateTriggers: {
+        getFillColor: [layer.fillColorAttribute, layer.fillColorScheme],
+        getLineColor: [layer.lineColorAttribute, layer.lineColorScheme]
+      }
     });
   });
 
