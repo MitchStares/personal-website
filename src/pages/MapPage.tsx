@@ -7,6 +7,7 @@ import * as turf from '@turf/turf';
 // import { calculateAverageArea } from '../utils/calculateAverageArea';
 import {LayerCount, RBushItem, AttributeCounter} from "../types";
 import PopoutInsights from '../components/PopoutInsights';
+import { Link } from 'react-router-dom';
 
 
 const MAPBOX_ACCESS_TOKEN = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
@@ -242,6 +243,12 @@ const MapPage: React.FC = () => {
                   onClose={() => setShowPopoutInsights(false)}
                 />
               )}
+              <Link 
+              to="/ar" 
+              className="absolute bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors duration-300"
+            >
+              View in AR
+            </Link>
             </>
           ) : (
             <div>Mapbox access token is missing. Please check environment variables.</div>

@@ -19,6 +19,8 @@
     "@types/react-icons": "^3.0.0",
     "@types/react-router-dom": "^5.3.3",
     "@types/styled-components": "^5.1.34",
+    "@types/three": "^0.167.2",
+    "@types/webxr": "^0.5.19",
     "@uiw/react-md-editor": "^4.0.4",
     "d3-scale": "^4.0.2",
     "d3-scale-chromatic": "^3.1.0",
@@ -40,8 +42,11 @@
     "react-scripts": "5.0.1",
     "react-toastify": "^10.0.5",
     "styled-components": "^6.1.12",
+    "three": "^0.167.1",
     "typescript": "^4.9.5",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "webxr": "^0.0.0",
+    "webxr-polyfill": "^2.0.3"
   },
   "scripts": {
     "predeploy": "npm run build",
