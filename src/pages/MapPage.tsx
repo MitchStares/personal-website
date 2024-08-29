@@ -7,18 +7,17 @@ import * as turf from '@turf/turf';
 // import { calculateAverageArea } from '../utils/calculateAverageArea';
 import {LayerCount, RBushItem, AttributeCounter} from "../types";
 import PopoutInsights from '../components/PopoutInsights';
-
+import AttributeCounterPopout from '../components/AttributeCounterPopout';
 
 const MAPBOX_ACCESS_TOKEN = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
 
-const INITIAL_VIEW_STATE = {
+const INITIAL_VIEW_STATE = {  
   longitude: 151.2110,
   latitude: -33.8614,
   zoom: 13,
   pitch: 0,
   bearing: 0
 };
-
 
 const MapPage: React.FC = () => {
   const [mapStyle, setMapStyle] = useState('mapbox://styles/mapbox/light-v9');
@@ -30,7 +29,7 @@ const MapPage: React.FC = () => {
   const [showPopoutInsights, setShowPopoutInsights] = useState(false);
   const [attributeCounters, setAttributeCounters] = useState<AttributeCounter[]>([])
   const [totalVisibleFeatures, setTotalVisibleFeatures] = useState(0);
-
+  const [popoutCounters, setPopoutCounters] = useState<Set<number>>(new Set());
 
   //Creating the spatial index for each feature using RBush for use in MapView
   useEffect(() => {
@@ -140,7 +139,6 @@ const MapPage: React.FC = () => {
     });
   };
 
-
   //On delete, remove from layer array
   const handleLayerRemove = (index: number) => {
     setLayers(prevLayers => prevLayers.filter((_, i) => i !== index));
@@ -201,54 +199,78 @@ const MapPage: React.FC = () => {
     );
   };
 
-    return (
-      <div className={`flex h-screen'}`}>
-        <Sidebar
-          onToggleSidebar={setSidebarOpen}
-          onFileUpload={handleFileUpload}
-          layers={layers}
-          onLayerSettingChange={handleLayerSettingChange}
-          onRemoveLayer={handleLayerRemove}
-          onOptionChange={handleOptionChange}
-          options={options}
-          insights={insights}
-          layerCounts={layerCounts}
-          onPopoutInsights={() => setShowPopoutInsights(true)}
-          attributeCounters={attributeCounters}
-          onAddAttributeCounter={handleAddAttributeCounter}
-          onRemoveAttributeCounter={handleRemoveAttributeCounter}
-        />
-        <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
-          {MAPBOX_ACCESS_TOKEN ? (
-            <>
-              <MapView
-                initialViewState={INITIAL_VIEW_STATE}
-                mapboxAccessToken={MAPBOX_ACCESS_TOKEN}
-                mapStyle={mapStyle}
-                layers={layers}
-                spatialIndex={spatialIndex}
-                onViewStateChange={setViewport}
-                onStyleChange={setMapStyle}
-                sidebarOpen={sidebarOpen}
-                onLayerCountsUpdate={handleLayerCountsUpdate}
-                attributeCounters={attributeCounters}
-                onAttributeCountsUpdate={handleAttributeCountsUpdate}
-              />
-              {showPopoutInsights && (
-                <PopoutInsights
-                  layerCounts={layerCounts.filter(layerCount => 
-                    layers.find(layer => layer.id === layerCount.id && layer.visible)
-                  )}
-                  onClose={() => setShowPopoutInsights(false)}
-                />
-              )}
-            </>
-          ) : (
-            <div>Mapbox access token is missing. Please check environment variables.</div>
-          )}
-        </div>
-      </div>
-    );
+  const toggleAttributeCounterPopout = (index: number) => {
+    setPopoutCounters(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
   };
+
+  return (
+    <div className={`flex h-screen'}`}>
+      <Sidebar
+        onToggleSidebar={setSidebarOpen}
+        onFileUpload={handleFileUpload}
+        layers={layers}
+        onLayerSettingChange={handleLayerSettingChange}
+        onRemoveLayer={handleLayerRemove}
+        onOptionChange={handleOptionChange}
+        options={options}
+        insights={insights}
+        layerCounts={layerCounts}
+        onPopoutInsights={() => setShowPopoutInsights(true)}
+        attributeCounters={attributeCounters}
+        onAddAttributeCounter={handleAddAttributeCounter}
+        onRemoveAttributeCounter={handleRemoveAttributeCounter}
+        onPopoutAttributeCounter={(index) => toggleAttributeCounterPopout(index)}
+      />
+      <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
+        {MAPBOX_ACCESS_TOKEN ? (
+          <>
+            <MapView
+              initialViewState={INITIAL_VIEW_STATE}
+              mapboxAccessToken={MAPBOX_ACCESS_TOKEN}
+              mapStyle={mapStyle}
+              layers={layers}
+              spatialIndex={spatialIndex}
+              onViewStateChange={setViewport}
+              onStyleChange={setMapStyle}
+              sidebarOpen={sidebarOpen}
+              onLayerCountsUpdate={handleLayerCountsUpdate}
+              attributeCounters={attributeCounters}
+              onAttributeCountsUpdate={handleAttributeCountsUpdate}
+            />
+            {showPopoutInsights && (
+              <PopoutInsights
+                layerCounts={layerCounts.filter(layerCount => 
+                  layers.find(layer => layer.id === layerCount.id && layer.visible)
+                )}
+                onClose={() => setShowPopoutInsights(false)}
+              />
+            )}
+            {attributeCounters.map((counter, index) => 
+              popoutCounters.has(index) && (
+                <AttributeCounterPopout
+                  key={index}
+                  counter={counter}
+                  onClose={() => toggleAttributeCounterPopout(index)}
+                  index={index}
+                  totalPopouts={popoutCounters.size}
+                />
+              )
+            )}
+          </>
+        ) : (
+          <div>Mapbox access token is missing. Please check environment variables.</div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 export default MapPage;

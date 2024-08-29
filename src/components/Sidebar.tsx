@@ -25,6 +25,7 @@ interface SidebarProps {
   attributeCounters: AttributeCounter[];
   onAddAttributeCounter: (layerId: string, attribute: string) => void;
   onRemoveAttributeCounter: (index: number) => void;
+  onPopoutAttributeCounter: (index: number) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -41,6 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onAddAttributeCounter,
   onRemoveAttributeCounter,
   onPopoutInsights,
+  onPopoutAttributeCounter,
 }) => {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [expandedLayers, setExpandedLayers] = useState<boolean[]>(
@@ -142,12 +144,20 @@ const Sidebar: React.FC<SidebarProps> = ({
               <span className="font-semibold text-gray-700">
                 {`${layers.find(l => l.id === counter.layerId)?.name} - ${counter.attribute}`}
               </span>
-              <button
-                onClick={() => onRemoveAttributeCounter(index)}
-                className="text-red-600 hover:text-red-800"
-              >
-                Remove
-              </button>
+              <div>
+                <button
+                  onClick={() => onPopoutAttributeCounter(index)}
+                  className="mr-2 text-sm bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
+                >
+                  Pop Out
+                </button>
+                <button
+                  onClick={() => onRemoveAttributeCounter(index)}
+                  className="text-red-600 hover:text-red-800"
+                >
+                  Remove
+                </button>
+              </div>
             </div>
             {counter.counts && Object.entries(counter.counts).map(([value, count]) => (
               <div key={value} className="flex justify-between items-center">
