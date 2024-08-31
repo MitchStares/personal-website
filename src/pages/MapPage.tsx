@@ -30,6 +30,9 @@ const MapPage: React.FC = () => {
   const [attributeCounters, setAttributeCounters] = useState<AttributeCounter[]>([])
   const [totalVisibleFeatures, setTotalVisibleFeatures] = useState(0);
   const [popoutCounters, setPopoutCounters] = useState<Set<number>>(new Set());
+  const [editMode, setEditMode] = useState(false);
+  const [insightsPosition, setInsightsPosition] = useState({ x: 0, y: 0 });
+  const [attributeCounterPositions, setAttributeCounterPositions] = useState<{ [key: number]: { x: number, y: number } }>({});
 
   //Creating the spatial index for each feature using RBush for use in MapView
   useEffect(() => {
@@ -211,8 +214,18 @@ const MapPage: React.FC = () => {
     });
   };
 
+  const toggleEditMode = () => {
+    setEditMode(!editMode);
+  };
+
   return (
     <div className={`flex h-screen'}`}>
+      <button
+        onClick={toggleEditMode}
+        className="absolute top-4 right-4 z-50 bg-blue-500 text-white px-4 py-2 rounded"
+      >
+        {editMode ? "Exit Edit Mode" : "Enter Edit Mode"}
+      </button>
       <Sidebar
         onToggleSidebar={setSidebarOpen}
         onFileUpload={handleFileUpload}
@@ -228,7 +241,9 @@ const MapPage: React.FC = () => {
         onAddAttributeCounter={handleAddAttributeCounter}
         onRemoveAttributeCounter={handleRemoveAttributeCounter}
         onPopoutAttributeCounter={(index) => toggleAttributeCounterPopout(index)}
-      />
+        editMode={editMode}
+                />
+
       <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
         {MAPBOX_ACCESS_TOKEN ? (
           <>
@@ -251,6 +266,7 @@ const MapPage: React.FC = () => {
                   layers.find(layer => layer.id === layerCount.id && layer.visible)
                 )}
                 onClose={() => setShowPopoutInsights(false)}
+                editMode={editMode}
               />
             )}
             {attributeCounters.map((counter, index) => 
@@ -261,6 +277,7 @@ const MapPage: React.FC = () => {
                   onClose={() => toggleAttributeCounterPopout(index)}
                   index={index}
                   totalPopouts={popoutCounters.size}
+                  editMode={editMode}
                 />
               )
             )}

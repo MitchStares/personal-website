@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 
 interface DataTablePopupProps {
-  layer: any;
+  layer: any; // Replace 'any' with your specific layer type
   onClose: () => void;
-  onDataTypesChange: (layerId: string, newDataTypes: {[key: string]: string}) => void;
+  onDataTypesChange: (newDataTypes: { [key: string]: string }) => void;
 }
 
 const DataTablePopup: React.FC<DataTablePopupProps> = ({ layer, onClose, onDataTypesChange }) => {
@@ -44,7 +44,7 @@ const DataTablePopup: React.FC<DataTablePopupProps> = ({ layer, onClose, onDataT
   const handleTypeChange = (attribute: string, newType: string) => {
     const newDataTypes = {...dataTypes, [attribute]: newType};
     setDataTypes(newDataTypes);
-    onDataTypesChange(layer.id, newDataTypes);
+    onDataTypesChange(newDataTypes);
   };
 
   const renderCellValue = (value: any) => {

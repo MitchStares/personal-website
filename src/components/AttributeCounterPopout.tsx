@@ -7,13 +7,15 @@ interface AttributeCounterPopoutProps {
   onClose: () => void;
   index: number;
   totalPopouts: number;
+  editMode: boolean;
 }
 
 const AttributeCounterPopout: React.FC<AttributeCounterPopoutProps> = ({
   counter,
   onClose,
   index,
-  totalPopouts
+  totalPopouts,
+  editMode
 }) => {
   const popoutWidth = 250; // Adjust this value based on your popout's width
   const popoutHeight = 200; // Adjust this value based on your popout's height
@@ -28,22 +30,24 @@ const AttributeCounterPopout: React.FC<AttributeCounterPopoutProps> = ({
     bottom: `${spacing + row * (popoutHeight + spacing)}px`,
     right: `${spacing + column * (popoutWidth + spacing)}px`,
     width: `${popoutWidth}px`,
-    maxHeight: `${popoutHeight}px`,
-    overflowY: 'auto'
+    height: `${popoutHeight}px`,
   };
 
   return (
-    <Popout 
-      title={`${counter.layerId} - ${counter.attribute}`} 
+    <Popout
+      title={`${counter.layerId} - ${counter.attribute}`}
       onClose={onClose}
+      editMode={editMode}
       style={style}
     >
-      {Object.entries(counter.counts || {}).map(([value, count]) => (
-        <div key={value} className="flex justify-between">
-          <span className="text-gray-600">{value}:</span>
-          <span className="font-semibold text-gray-800">{count}</span>
-        </div>
-      ))}
+      <div className="overflow-y-auto h-full">
+        {Object.entries(counter.counts || {}).map(([value, count]) => (
+          <div key={value} className="flex justify-between">
+            <span className="text-gray-600">{value}:</span>
+            <span className="font-semibold text-gray-800">{count}</span>
+          </div>
+        ))}
+      </div>
     </Popout>
   );
 };
