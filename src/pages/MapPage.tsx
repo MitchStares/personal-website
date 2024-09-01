@@ -33,6 +33,12 @@ const MapPage: React.FC = () => {
   const [editMode, setEditMode] = useState(false);
   const [insightsPosition, setInsightsPosition] = useState({ x: 0, y: 0 });
   const [attributeCounterPositions, setAttributeCounterPositions] = useState<{ [key: number]: { x: number, y: number } }>({});
+  const [attributeCounterSizes, setAttributeCounterSizes] = useState<{ [key: number]: { width: number, height: number } }>({});
+  const [popoutOffset, setPopoutOffset] = useState(0);
+
+  useEffect(() => {
+    setPopoutOffset(sidebarOpen ? 256 : 0); // Assuming the sidebar width is 256px
+  }, [sidebarOpen]);
 
   //Creating the spatial index for each feature using RBush for use in MapView
   useEffect(() => {
@@ -267,6 +273,7 @@ const MapPage: React.FC = () => {
                 )}
                 onClose={() => setShowPopoutInsights(false)}
                 editMode={editMode}
+                sidebarOffset={popoutOffset}
               />
             )}
             {attributeCounters.map((counter, index) => 
@@ -278,6 +285,14 @@ const MapPage: React.FC = () => {
                   index={index}
                   totalPopouts={popoutCounters.size}
                   editMode={editMode}
+                  position={{
+                    x: (attributeCounterPositions[index]?.x || 0) + popoutOffset,
+                    y: attributeCounterPositions[index]?.y || 0
+                  }}
+                  size={attributeCounterSizes[index] || { width: 250, height: 200 }}
+                  onUpdatePosition={(x, y) => setAttributeCounterPositions(prev => ({ ...prev, [index]: { x: x - popoutOffset, y } }))}
+                  onUpdateSize={(width, height) => setAttributeCounterSizes(prev => ({ ...prev, [index]: { width, height } }))}
+                  sidebarOffset={popoutOffset}
                 />
               )
             )}

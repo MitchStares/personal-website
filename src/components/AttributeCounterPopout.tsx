@@ -8,6 +8,11 @@ interface AttributeCounterPopoutProps {
   index: number;
   totalPopouts: number;
   editMode: boolean;
+  position: { x: number, y: number };
+  size: { width: number, height: number };
+  onUpdatePosition: (x: number, y: number) => void;
+  onUpdateSize: (width: number, height: number) => void;
+  sidebarOffset: number;
 }
 
 const AttributeCounterPopout: React.FC<AttributeCounterPopoutProps> = ({
@@ -15,30 +20,26 @@ const AttributeCounterPopout: React.FC<AttributeCounterPopoutProps> = ({
   onClose,
   index,
   totalPopouts,
-  editMode
+  editMode,
+  position,
+  size,
+  onUpdatePosition,
+  onUpdateSize,
+  sidebarOffset
 }) => {
-  const popoutWidth = 250; // Adjust this value based on your popout's width
-  const popoutHeight = 200; // Adjust this value based on your popout's height
-  const spacing = 10; // Spacing between popouts
-  const columns = Math.ceil(Math.sqrt(totalPopouts)); // Calculate number of columns
-
-  const column = index % columns;
-  const row = Math.floor(index / columns);
-
-  const style: React.CSSProperties = {
-    position: 'absolute',
-    bottom: `${spacing + row * (popoutHeight + spacing)}px`,
-    right: `${spacing + column * (popoutWidth + spacing)}px`,
-    width: `${popoutWidth}px`,
-    height: `${popoutHeight}px`,
-  };
-
   return (
     <Popout
       title={`${counter.layerId} - ${counter.attribute}`}
       onClose={onClose}
       editMode={editMode}
-      style={style}
+      position={{
+        x: position.x + sidebarOffset,
+        y: position.y
+      }}
+      size={size}
+      onUpdatePosition={(x, y) => onUpdatePosition(x - sidebarOffset, y)}
+      onUpdateSize={onUpdateSize}
+      sidebarOffset={sidebarOffset}
     >
       <div className="overflow-y-auto h-full">
         {Object.entries(counter.counts || {}).map(([value, count]) => (
