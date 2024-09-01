@@ -15,18 +15,15 @@ const AttributeCounterPopout: React.FC<AttributeCounterPopoutProps> = ({
   index,
   totalPopouts
 }) => {
-  const popoutWidth = 250; // Adjust this value based on your popout's width
-  const popoutHeight = 200; // Adjust this value based on your popout's height
-  const spacing = 10; // Spacing between popouts
-  const columns = Math.ceil(Math.sqrt(totalPopouts)); // Calculate number of columns
-
-  const column = index % columns;
-  const row = Math.floor(index / columns);
+  const popoutWidth = 250;
+  const popoutHeight = 200;
+  const spacing = 10;
+  const bottomOffset = 4; // Distance from the bottom of the screen
 
   const style: React.CSSProperties = {
     position: 'absolute',
-    bottom: `${spacing + row * (popoutHeight + spacing)}px`,
-    right: `${spacing + column * (popoutWidth + spacing)}px`,
+    bottom: `${bottomOffset + (popoutHeight + spacing) * index}px`,
+    right: `${spacing}px`,
     width: `${popoutWidth}px`,
     maxHeight: `${popoutHeight}px`,
     overflowY: 'auto'
