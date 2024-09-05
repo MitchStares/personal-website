@@ -11,6 +11,7 @@ import MapPage from './pages/MapPage';
 import Auth from './components/Auth';
 import ProtectedRoute from './components/ProtectedRoute';
 import { initGA, logPageView, getPathFromHash } from './analytics';
+import Projects from './pages/Projects';
 
 // Initialize Google Analytics
 initGA(process.env.REACT_APP_GA_MEASUREMENT_ID || '');
@@ -58,6 +59,7 @@ const AppContent: React.FC<{ user: any }> = ({ user }) => {
         } 
       />
       <Route path="/map" element={<MapPage />} />
+      <Route path="/projects" element={<Projects user={user} />} />
       <Route path="/auth" element={<Auth />} />
     </Routes>
   );

@@ -46,7 +46,7 @@ const Navbar: React.FC = () => {
         <div className="hidden lg:flex items-center space-x-6">
           <Link to="/" className={`hover:text-green-700 ${location.pathname === '/' ? 'text-green-700' : ''}`}>Home</Link>
           <Link to="/blog" className={`hover:text-green-700 ${location.pathname === '/blog' ? 'text-green-700' : ''}`}>Blog</Link>
-          <Link to="/map" className={`hover:text-green-700 ${location.pathname === '/map' ? 'text-green-700' : ''}`}>Projects</Link>
+          <Link to="/projects" className={`hover:text-green-700 ${location.pathname === '/projects' ? 'text-green-700' : ''}`}>Projects</Link>
         </div>
 
         {/* Desktop buttons */}
@@ -61,7 +61,7 @@ const Navbar: React.FC = () => {
         <div className="px-2 pt-2 pb-3 space-y-1">
           <Link to="/" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-green-700 hover:bg-gray-50">Home</Link>
           <Link to="/blog" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-green-700 hover:bg-gray-50">Blog</Link>
-          <Link to="/map" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-green-700 hover:bg-gray-50">Projects</Link>
+          <Link to="/projects" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-green-700 hover:bg-gray-50">Projects</Link>
           <Link to="/auth" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-green-700 hover:bg-gray-50">Sign In</Link>
           <Link to="/map" className="block px-3 py-2 rounded-md text-base font-medium bg-green-800 text-white hover:bg-green-700">Spatial Insights</Link>
         </div>
