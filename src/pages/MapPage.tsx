@@ -255,15 +255,19 @@ const MapPage: React.FC = () => {
                 totalPopouts={Array.from(popoutCounters).length + (showPopoutInsights ? 1 : 0)}
               />
             )}
-            {Array.from(popoutCounters).map((index, arrayIndex) => (
-              <AttributeCounterPopout
-                key={index}
-                counter={attributeCounters[index]}
-                onClose={() => toggleAttributeCounterPopout(index)}
-                index={showPopoutInsights ? arrayIndex + 1 : arrayIndex}
-                totalPopouts={Array.from(popoutCounters).length + (showPopoutInsights ? 1 : 0)}
-              />
-            ))}
+            {Array.from(popoutCounters).map((index, arrayIndex) => {
+              const layer = layers.find(l => l.id === attributeCounters[index].layerId);
+              return (
+                <AttributeCounterPopout
+                  key={index}
+                  counter={attributeCounters[index]}
+                  layerName={layer ? layer.name : 'Unknown Layer'}
+                  onClose={() => toggleAttributeCounterPopout(index)}
+                  index={showPopoutInsights ? arrayIndex + 1 : arrayIndex}
+                  totalPopouts={Array.from(popoutCounters).length + (showPopoutInsights ? 1 : 0)}
+                />
+              );
+            })}
           </>
         ) : (
           <div>Mapbox access token is missing. Please check environment variables.</div>

@@ -4,6 +4,7 @@ import { AttributeCounter } from "../types";
 
 interface AttributeCounterPopoutProps {
   counter: AttributeCounter;
+  layerName: string;
   onClose: () => void;
   index: number;
   totalPopouts: number;
@@ -11,6 +12,7 @@ interface AttributeCounterPopoutProps {
 
 const AttributeCounterPopout: React.FC<AttributeCounterPopoutProps> = ({
   counter,
+  layerName,
   onClose,
   index,
   totalPopouts
@@ -31,7 +33,7 @@ const AttributeCounterPopout: React.FC<AttributeCounterPopoutProps> = ({
 
   return (
     <Popout 
-      title={`${counter.layerId} - ${counter.attribute}`} 
+      title={`${layerName} - ${counter.attribute}`} 
       onClose={onClose}
       style={style}
     >
