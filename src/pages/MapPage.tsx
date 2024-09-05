@@ -52,51 +52,44 @@ const MapPage: React.FC = () => {
   }, [layers]);
 
   //Uploading of files, parsing as json and adding to layer array with fields for data, name and aesthetics options
-  const handleFileUpload = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        const json = JSON.parse(event.target.result as string);
-        const layerId = `geojson-layer-${layers.length}`;
-        const layerName = `Layer ${layers.length + 1}`;
-  
-        const geometryTypes = new Set(json.features.map((feature: any) => feature.geometry.type));
-        console.log("Detected geometry types:", Array.from(geometryTypes));
-  
-        json.features = json.features.map((feature: any) => ({
-          ...feature,
-          properties: {
-            ...feature.properties,
-            layerId: layerId
-          }
-        }));
-  
-        setLayers(prevLayers => [
-          ...prevLayers,
-          {
-            id: layerId,
-            name: layerName,
-            data: json,
-            visible: true,
-            transparency: 0.7,
-            fillColor: [255, 140, 0],
-            lineColor: [255, 255, 255],
-            lineWidth: 2,
-            geometryTypes: Array.from(geometryTypes),
-            visibleGeometryTypes: Object.fromEntries(
-              Array.from(geometryTypes).map(type => [type, true])
-            ),
-            fillColorAttribute: '',
-            fillColorScheme: '',
-            lineColorAttribute: '',
-            lineColorScheme: '',
-            selectedGeometryType: '',
-            dataTypes: {}
-          }
-        ]);
+  const handleFileUpload = (geojson: any) => {
+    const layerId = `geojson-layer-${layers.length}`;
+    const layerName = `Layer ${layers.length + 1}`;
+
+    const geometryTypes = new Set(geojson.features.map((feature: any) => feature.geometry.type));
+
+    // Calculate data types
+    const dataTypes: { [key: string]: string } = {};
+    if (geojson.features.length > 0) {
+      const properties = geojson.features[0].properties;
+      for (const key in properties) {
+        dataTypes[key] = typeof properties[key];
       }
-    };
-    reader.readAsText(file);
+    }
+
+    setLayers(prevLayers => [
+      ...prevLayers,
+      {
+        id: layerId,
+        name: layerName,
+        data: geojson,
+        visible: true,
+        transparency: 0.7,
+        fillColor: [255, 140, 0],
+        lineColor: [255, 255, 255],
+        lineWidth: 2,
+        geometryTypes: Array.from(geometryTypes),
+        visibleGeometryTypes: Object.fromEntries(
+          Array.from(geometryTypes).map(type => [type, true])
+        ),
+        fillColorAttribute: '',
+        fillColorScheme: '',
+        lineColorAttribute: '',
+        lineColorScheme: '',
+        selectedGeometryType: '',
+        dataTypes: dataTypes
+      }
+    ]);
   };
 
   //Handling changes to aesthetic options
